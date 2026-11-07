@@ -1,31 +1,33 @@
 ---
-import Icon from './Icon.astro';
 import { catalog, categoryUrl, groupUrl } from '../data/catalog';
 ---
 
-<section id="catalog" class="section">
+<section id="catalog" class="block">
   <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">Продукция</span>
-      <h2>Всё для микроклимата внутри шкафа</h2>
-      <p>Охлаждение, вентиляция, обогрев и управление — оборудование одной системы, которое легко сочетать между собой.</p>
-    </div>
+    <h2>Продукция</h2>
+    <p class="block__lead">
+      Четыре направления закрывают весь микроклимат шкафа: охлаждение, вентиляцию,
+      обогрев и управление.
+    </p>
 
     <div class="catalog">
       {catalog.map((category) => (
-        <article class:list={['card', `card--${category.icon}`]}>
-          <div class="card__icon"><Icon name={category.icon} /></div>
-          <h3><a href={categoryUrl(category)}>{category.title}</a></h3>
-          <p class="card__summary">{category.summary}</p>
-          <ul class="card__groups">
+        <article class:list={['category', `category--${category.tone}`]}>
+          <div class="category__head">
+            <h3><a href={categoryUrl(category)}>{category.title}</a></h3>
+            <p>{category.summary}</p>
+          </div>
+
+          <ul class="category__groups">
             {category.groups.map((group) => (
               <li>
                 <a href={groupUrl(category, group)}>{group.title}</a>
-                <span>{group.items.join(' · ')}</span>
+                <ul class="category__series" aria-label={`Серии: ${group.title}`}>
+                  {group.items.map((item) => <li>{item}</li>)}
+                </ul>
               </li>
             ))}
           </ul>
-          <a href={categoryUrl(category)} class="card__more">Все {category.title.toLowerCase()} →</a>
         </article>
       ))}
     </div>
@@ -34,106 +36,121 @@ import { catalog, categoryUrl, groupUrl } from '../data/catalog';
 
 <style>
   .catalog {
+    margin-top: clamp(40px, 5vw, 64px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .category {
+    --tone: var(--t-neutral);
+
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 24px 48px;
+    padding-block: 36px;
+    border-top: 1px solid var(--line);
   }
 
-  .card {
-    display: flex;
-    flex-direction: column;
-    padding: 32px;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius);
-    background: #fff;
-    transition: box-shadow 0.2s, border-color 0.2s;
+  .category--cold {
+    --tone: var(--t-cold);
   }
 
-  .card:hover {
-    border-color: transparent;
-    box-shadow: var(--shadow);
+  .category--air {
+    --tone: var(--t-cool);
   }
 
-  .card__icon {
-    display: grid;
-    place-items: center;
-    width: 52px;
-    height: 52px;
-    margin-bottom: 20px;
-    border-radius: var(--radius-sm);
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+  .category--hot {
+    --tone: var(--t-hot);
   }
 
-  .card--heat .card__icon {
-    background: var(--color-heat-soft);
-    color: var(--color-heat);
+  .category__head {
+    position: relative;
+    padding-left: 22px;
   }
 
-  .card--control .card__icon {
-    background: #e8edf3;
-    color: var(--color-brand);
+  /* Маркер: место направления на тепловой шкале */
+  .category__head::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.25em;
+    width: 6px;
+    height: 1.6em;
+    border-radius: 3px;
+    background: var(--tone);
   }
 
-  .card h3 {
-    font-size: 24px;
+  .category h3 {
+    font-size: clamp(26px, 2.6vw, 34px);
   }
 
-  .card h3 a {
+  .category h3 a {
     text-decoration: none;
   }
 
-  .card__summary {
-    margin-top: 8px;
-    color: var(--color-ink-muted);
+  .category h3 a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
   }
 
-  .card__groups {
-    display: grid;
-    gap: 2px;
-    margin: 24px 0;
+  .category__head p {
+    max-width: 40ch;
+    margin-top: 12px;
+    color: var(--ink-muted);
+  }
+
+  .category__groups {
+    margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .card__groups li {
+  .category__groups > li {
+    display: grid;
+    grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
+    gap: 8px 24px;
+    align-items: baseline;
+    padding-block: 12px;
+  }
+
+  .category__groups > li + li {
+    border-top: 1px dashed var(--line);
+  }
+
+  .category__groups > li > a {
+    font-weight: 450;
+    text-decoration: none;
+  }
+
+  .category__groups > li > a:hover {
+    color: var(--accent);
+  }
+
+  .category__series {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 4px 16px;
-    padding: 10px 0;
-    border-top: 1px solid var(--color-line);
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .card__groups a {
-    font-weight: 500;
-    text-decoration: none;
-  }
-
-  .card__groups a:hover,
-  .card h3 a:hover {
-    color: var(--color-accent);
-  }
-
-  .card__groups span {
+  .category__series li {
+    padding: 2px 8px;
+    border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--line));
+    border-radius: var(--radius-s);
     font-size: 14px;
-    color: var(--color-ink-muted);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--tone) 8%, transparent);
   }
 
-  .card__more {
-    margin-top: auto;
-    font-weight: 600;
-    text-decoration: none;
-    color: var(--color-accent);
-  }
-
-  @media (max-width: 800px) {
-    .catalog {
+  @media (max-width: 860px) {
+    .category {
       grid-template-columns: 1fr;
     }
 
-    .card {
-      padding: 24px;
+    .category__groups > li {
+      grid-template-columns: 1fr;
     }
   }
 </style>

@@ -1,5 +1,6 @@
 ---
 import Logo from './Logo.astro';
+import ThemeToggle from './ThemeToggle.astro';
 import { mainNav } from '../data/site';
 ---
 
@@ -15,21 +16,24 @@ import { mainNav } from '../data/site';
       </ul>
     </nav>
 
-    <a href="/#contact" class="btn btn--primary header__cta">Подобрать оборудование</a>
+    <div class="header__tools">
+      <ThemeToggle />
+      <a href="/#contact" class="btn btn--primary header__cta">Подобрать оборудование</a>
 
-    <details class="header__mobile">
-      <summary aria-label="Меню">
-        <span></span><span></span><span></span>
-      </summary>
-      <nav aria-label="Мобильная навигация">
-        <ul>
-          {mainNav.map((link) => (
-            <li><a href={link.href}>{link.title}</a></li>
-          ))}
-          <li><a href="/#contact" class="btn btn--primary">Подобрать оборудование</a></li>
-        </ul>
-      </nav>
-    </details>
+      <details class="header__mobile">
+        <summary aria-label="Меню">
+          <span></span><span></span>
+        </summary>
+        <nav aria-label="Мобильная навигация">
+          <ul>
+            {mainNav.map((link) => (
+              <li><a href={link.href}>{link.title}</a></li>
+            ))}
+          </ul>
+          <a href="/#contact" class="btn btn--primary">Подобрать оборудование</a>
+        </nav>
+      </details>
+    </div>
   </div>
 </header>
 
@@ -37,25 +41,20 @@ import { mainNav } from '../data/site';
   .header {
     position: sticky;
     top: 0;
-    z-index: 10;
-    background: rgb(255 255 255 / 0.92);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--color-line);
+    z-index: 20;
+    background: var(--header-bg);
+    backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid var(--line);
   }
 
   .header__inner {
     display: flex;
     align-items: center;
-    gap: 32px;
-    min-height: 72px;
+    gap: 40px;
+    min-height: var(--header-h);
   }
 
-  .header__nav {
-    margin-left: auto;
-  }
-
-  .header__nav ul,
-  .header__mobile ul {
+  .header__nav ul {
     display: flex;
     gap: 28px;
     margin: 0;
@@ -64,29 +63,40 @@ import { mainNav } from '../data/site';
   }
 
   .header__nav a {
-    font-weight: 500;
+    font-size: 16px;
     text-decoration: none;
-    color: var(--color-ink);
+    color: var(--ink-muted);
   }
 
   .header__nav a:hover {
-    color: var(--color-accent);
+    color: var(--ink);
+  }
+
+  .header__tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
   }
 
   .header__cta {
     min-height: 42px;
     padding: 0 18px;
+    font-size: 15px;
   }
 
   .header__mobile {
     display: none;
-    margin-left: auto;
   }
 
   .header__mobile summary {
     display: grid;
-    gap: 5px;
-    padding: 10px;
+    place-content: center;
+    gap: 6px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
     cursor: pointer;
     list-style: none;
   }
@@ -96,42 +106,47 @@ import { mainNav } from '../data/site';
   }
 
   .header__mobile summary span {
-    width: 22px;
-    height: 2px;
-    background: var(--color-ink);
-    border-radius: 1px;
+    width: 18px;
+    height: 1.5px;
+    background: var(--ink);
+    transition: transform 0.2s;
+  }
+
+  .header__mobile[open] summary span:first-child {
+    transform: translateY(3.75px) rotate(45deg);
+  }
+
+  .header__mobile[open] summary span:last-child {
+    transform: translateY(-3.75px) rotate(-45deg);
   }
 
   .header__mobile nav {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
-    background: #fff;
-    border-bottom: 1px solid var(--color-line);
-    box-shadow: var(--shadow);
+    inset: 100% 0 auto;
+    padding: 8px var(--gutter) 24px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
   }
 
   .header__mobile ul {
-    flex-direction: column;
-    gap: 0;
-    padding: 8px var(--gutter) 20px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
   }
 
-  .header__mobile li a:not(.btn) {
+  .header__mobile li a {
     display: block;
-    padding: 12px 0;
-    font-weight: 500;
+    padding: 14px 0;
+    font-size: 18px;
     text-decoration: none;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
   }
 
   .header__mobile .btn {
     width: 100%;
-    margin-top: 16px;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 960px) {
     .header__nav,
     .header__cta {
       display: none;

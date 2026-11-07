@@ -19,7 +19,8 @@
 ## Стек
 
 - [Astro](https://astro.build) 7 + TypeScript, статическая сборка
-- Обычный CSS с дизайн-токенами в CSS-переменных (`src/styles/global.css`)
+- Обычный CSS с дизайн-токенами в CSS-переменных (`src/styles/global.css`), светлая и тёмная
+  темы — см. [ADR-0004](docs/adr/0004-visual-language-and-themes.md)
 - Хостинг — будет выбран отдельным ADR
 
 ## Быстрый старт

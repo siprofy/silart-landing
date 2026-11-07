@@ -2,20 +2,19 @@
 import { company } from '../data/site';
 ---
 
-<section id="company" class="section">
+<section id="company" class="block">
   <div class="container company">
-    <div class="section-head">
-      <span class="eyebrow">Компания</span>
-      <h2>Собственное производство оборудования для климат-контроля</h2>
-      <p>
-        Разрабатываем и выпускаем оборудование для термоменеджмента электротехнических шкафов
+    <div>
+      <h2>Компания</h2>
+      <p class="block__lead">
+        Разрабатываем и выпускаем оборудование для климат-контроля электротехнических шкафов
         и телекоммуникационных стоек.
       </p>
     </div>
 
     <ul class="company__links">
       {company.map((link) => (
-        <li><a href={link.href}>{link.title}<span aria-hidden="true">→</span></a></li>
+        <li><a href={link.href}>{link.title}</a></li>
       ))}
     </ul>
   </div>
@@ -29,37 +28,37 @@ import { company } from '../data/site';
     align-items: start;
   }
 
-  .company .section-head {
-    margin-bottom: 0;
-  }
-
   .company__links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     margin: 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid var(--color-line);
+    border-top: 1px solid var(--line);
   }
 
   .company__links a {
-    display: flex;
-    justify-content: space-between;
+    display: block;
     padding: 18px 0;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
     font-size: 18px;
-    font-weight: 500;
     text-decoration: none;
-    transition: color 0.15s, padding 0.15s;
   }
 
   .company__links a:hover {
-    padding-inline: 8px;
-    color: var(--color-accent);
+    color: var(--accent);
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 860px) {
     .company {
       grid-template-columns: 1fr;
       gap: 32px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .company__links {
+      grid-template-columns: 1fr;
     }
   }
 </style>

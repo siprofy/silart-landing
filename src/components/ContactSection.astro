@@ -2,14 +2,13 @@
 // Форма пока без обработчика: сервис приёма заявок будет выбран отдельным ADR.
 ---
 
-<section id="contact" class="section contact">
-  <div class="container contact__inner">
-    <div class="contact__text">
-      <span class="eyebrow">Подбор оборудования</span>
-      <h2>Не уверены, что выбрать?</h2>
-      <p>
-        Опишите шкаф и условия эксплуатации — инженеры рассчитают тепловую нагрузку
-        и предложат подходящее решение.
+<section id="contact" class="block">
+  <div class="container contact">
+    <div>
+      <h2>Подберём оборудование под ваш шкаф</h2>
+      <p class="block__lead">
+        Опишите шкаф и условия на объекте — инженеры рассчитают тепловую нагрузку
+        и предложат решение.
       </p>
     </div>
 
@@ -23,8 +22,12 @@
         <input type="text" name="contact" autocomplete="email" required />
       </label>
       <label class="contact__wide">
-        <span>Задача</span>
-        <textarea name="message" rows="4" placeholder="Размеры шкафа, мощность оборудования, место установки, температура окружающей среды"></textarea>
+        <span>Что нужно защитить</span>
+        <textarea
+          name="message"
+          rows="4"
+          placeholder="Размеры шкафа, мощность оборудования внутри, где стоит шкаф и какая там температура летом и зимой"
+        ></textarea>
       </label>
       <button type="submit" class="btn btn--primary contact__wide">Отправить запрос</button>
     </form>
@@ -33,39 +36,24 @@
 
 <style>
   .contact {
-    color: #fff;
-    background: var(--color-brand-deep);
-  }
-
-  .contact__inner {
     display: grid;
-    grid-template-columns: 0.9fr 1.1fr;
-    gap: 48px;
-    align-items: center;
-  }
-
-  .contact .eyebrow {
-    color: #7fd3f2;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
   }
 
   .contact h2 {
-    font-size: clamp(28px, 3.2vw, 40px);
-  }
-
-  .contact__text p {
-    margin-top: 16px;
-    font-size: 18px;
-    color: rgb(255 255 255 / 0.75);
+    max-width: 14ch;
   }
 
   .contact__form {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    padding: 32px;
-    border-radius: var(--radius);
-    background: rgb(255 255 255 / 0.06);
-    border: 1px solid rgb(255 255 255 / 0.12);
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
   }
 
   .contact__wide {
@@ -75,34 +63,35 @@
   .contact__form label {
     display: grid;
     gap: 6px;
-    font-size: 14px;
-    color: rgb(255 255 255 / 0.8);
+    font-size: 15px;
+    color: var(--ink-muted);
   }
 
   .contact__form input,
   .contact__form textarea {
     width: 100%;
     padding: 12px 14px;
-    border: 1px solid rgb(255 255 255 / 0.2);
-    border-radius: var(--radius-sm);
-    background: rgb(255 255 255 / 0.08);
-    color: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    background: var(--bg);
+    color: var(--ink);
     font: inherit;
     resize: vertical;
   }
 
-  .contact__form input:focus,
-  .contact__form textarea:focus {
+  .contact__form input:focus-visible,
+  .contact__form textarea:focus-visible {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
   }
 
   .contact__form textarea::placeholder {
-    color: rgb(255 255 255 / 0.4);
+    color: color-mix(in srgb, var(--ink-muted) 70%, transparent);
   }
 
   @media (max-width: 900px) {
-    .contact__inner {
+    .contact {
       grid-template-columns: 1fr;
     }
   }

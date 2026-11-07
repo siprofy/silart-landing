@@ -1,0 +1,432 @@
+---
+// Интерактивная тепловая карта шкафа: упрощённая модель, иллюстрирующая
+// эффект разных типов оборудования. Не расчёт для конкретного шкафа.
+
+const scenarios = [
+  { id: 'none', label: 'Без защиты', ambient: 35 },
+  { id: 'fan', label: 'Фильтрующий вентилятор', ambient: 35 },
+  { id: 'ac', label: 'Кондиционер', ambient: 35 },
+  { id: 'heater', label: 'Нагреватель зимой', ambient: -25 },
+];
+---
+
+<figure class="thermal" data-thermal data-mode="none">
+  <div class="thermal__stage" data-stage>
+    <canvas width="240" height="400" data-canvas aria-hidden="true"></canvas>
+    <svg class="thermal__overlay" viewBox="0 0 24 40" preserveAspectRatio="none" aria-hidden="true">
+      <!-- Оборудование внутри шкафа -->
+      <g class="thermal__modules">
+        <rect x="4" y="5" width="16" height="5.5" rx="0.4" />
+        <rect x="4" y="13" width="8" height="12" rx="0.4" />
+        <rect x="14" y="13" width="6" height="8" rx="0.4" />
+        <rect x="3" y="28" width="18" height="2" rx="0.3" />
+      </g>
+      <!-- Климатическое оборудование по сценарию -->
+      <g class="thermal__device" data-device="fan">
+        <path d="M8 37.5h8M8 38.6h8M8 1.4h8M8 2.5h8" />
+      </g>
+      <g class="thermal__device" data-device="ac">
+        <rect x="6" y="0.6" width="12" height="2.6" rx="0.4" />
+      </g>
+      <g class="thermal__device" data-device="heater">
+        <rect x="8" y="34" width="8" height="2.4" rx="0.4" />
+      </g>
+    </svg>
+    <output class="thermal__probe" data-probe hidden></output>
+  </div>
+
+  <div class="thermal__panel">
+    <dl class="thermal__readout">
+      <div>
+        <dt>Внутри, максимум</dt>
+        <dd data-max>—</dd>
+      </div>
+      <div>
+        <dt>Снаружи</dt>
+        <dd data-ambient>—</dd>
+      </div>
+    </dl>
+
+    <fieldset class="thermal__modes">
+      <legend class="visually-hidden">Чем защищён шкаф</legend>
+      {scenarios.map((s, i) => (
+        <label>
+          <input type="radio" name="thermal-mode" value={s.id} data-ambient={s.ambient} checked={i === 0} />
+          <span>{s.label}</span>
+        </label>
+      ))}
+    </fieldset>
+
+    <div class="thermal__scale" aria-hidden="true">
+      <div class="thermal__bar"></div>
+      <div class="thermal__ticks"><span>−30</span><span>0</span><span>+30</span><span>+60 °C</span></div>
+    </div>
+
+    <figcaption>
+      Упрощённая модель: показывает, как распределяется температура, но не заменяет расчёт
+      для вашего шкафа.
+    </figcaption>
+  </div>
+</figure>
+
+<style>
+  .thermal {
+    display: grid;
+    grid-template-columns: minmax(150px, 200px) minmax(0, 1fr);
+    gap: 28px;
+    margin: 0;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .thermal__stage {
+    position: relative;
+    aspect-ratio: 24 / 40;
+    border-radius: var(--radius-m);
+    overflow: hidden;
+    background: #10161d;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .thermal__stage canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .thermal__overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: rgb(255 255 255 / 0.7);
+    stroke-width: 0.12;
+    pointer-events: none;
+  }
+
+  .thermal__modules rect {
+    stroke-dasharray: 0.5 0.35;
+  }
+
+  .thermal__device {
+    display: none;
+    stroke: #fff;
+    stroke-width: 0.2;
+  }
+
+  .thermal[data-mode='fan'] [data-device='fan'],
+  .thermal[data-mode='ac'] [data-device='ac'],
+  .thermal[data-mode='heater'] [data-device='heater'] {
+    display: inline;
+  }
+
+  .thermal__probe {
+    position: absolute;
+    padding: 2px 8px;
+    border-radius: var(--radius-s);
+    background: rgb(0 0 0 / 0.72);
+    color: #fff;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translate(12px, -50%);
+  }
+
+  .thermal__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+  }
+
+  .thermal__readout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 0;
+  }
+
+  .thermal__readout dt {
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  .thermal__readout dd {
+    margin: 4px 0 0;
+    font-size: clamp(26px, 2.6vw, 34px);
+    font-weight: 300;
+    white-space: nowrap;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .thermal__modes {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .thermal__modes label {
+    position: relative;
+    display: block;
+    cursor: pointer;
+  }
+
+  .thermal__modes input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .thermal__modes span {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    font-size: 16px;
+  }
+
+  .thermal__modes span::before {
+    content: '';
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--ink-muted);
+    border-radius: 50%;
+  }
+
+  .thermal__modes label:hover span {
+    border-color: var(--ink-muted);
+  }
+
+  .thermal__modes input:checked + span {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .thermal__modes input:checked + span::before {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--surface);
+  }
+
+  .thermal__modes input:focus-visible + span {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .thermal__bar {
+    height: 8px;
+    border-radius: 4px;
+    /* Положение стопов соответствует шкале −30…+64 °C в скрипте */
+    background: linear-gradient(
+      90deg,
+      var(--t-frost) 0%,
+      var(--t-cold) 21%,
+      var(--t-cool) 40%,
+      var(--t-mild) 55%,
+      var(--t-warm) 70%,
+      var(--t-hot) 85%,
+      var(--t-burn) 100%
+    );
+  }
+
+  .thermal__ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .thermal figcaption {
+    margin-top: auto;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+
+  @media (max-width: 560px) {
+    .thermal {
+      grid-template-columns: 1fr;
+      padding: 16px;
+    }
+
+    .thermal__stage {
+      width: min(220px, 100%);
+      margin-inline: auto;
+    }
+  }
+</style>
+
+<script>
+  const COLS = 24;
+  const ROWS = 40;
+  const T_MIN = -30;
+  const T_MAX = 64;
+
+  // Тепловая шкала — те же цвета, что и токены --t-* в global.css
+  const STOPS: [number, string][] = [
+    [-30, '#3a2a8c'],
+    [-10, '#2f5bff'],
+    [8, '#12a8c8'],
+    [22, '#3fc28d'],
+    [36, '#f2a516'],
+    [50, '#f0661c'],
+    [64, '#d8203a'],
+  ];
+
+  const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const LUT = Array.from({ length: 256 }, (_, i) => {
+    const t = T_MIN + ((T_MAX - T_MIN) * i) / 255;
+    const k = STOPS.findIndex(([v]) => v >= t);
+    if (k <= 0) return rgb(STOPS[0][1]);
+    const [t0, c0] = STOPS[k - 1];
+    const [t1, c1] = STOPS[k];
+    const f = (t - t0) / (t1 - t0);
+    const a = rgb(c0);
+    const b = rgb(c1);
+    return a.map((v, j) => Math.round(v + (b[j] - v) * f));
+  });
+  const colorOf = (t: number) => {
+    const i = Math.round(((t - T_MIN) / (T_MAX - T_MIN)) * 255);
+    return LUT[Math.min(255, Math.max(0, i))];
+  };
+
+  const gauss = (x: number, y: number, cx: number, cy: number, sx: number, sy: number) =>
+    Math.exp(-((x - cx) ** 2 / (2 * sx * sx) + (y - cy) ** 2 / (2 * sy * sy)));
+
+  // Источники тепла: контроллер, частотный привод, блок питания
+  const SOURCES = [
+    { x: 12, y: 7.5, a: 0.5, s: 4.5 },
+    { x: 8, y: 18, a: 1, s: 4 },
+    { x: 17, y: 16.5, a: 0.7, s: 3.2 },
+  ];
+
+  type Mode = 'none' | 'fan' | 'ac' | 'heater';
+
+  function buildField(mode: Mode): Float32Array {
+    const field = new Float32Array(COLS * ROWS);
+    for (let y = 0; y < ROWS; y++) {
+      // Тёплый воздух поднимается: верх шкафа горячее низа
+      const strat = 1 - y / (ROWS - 1);
+      for (let x = 0; x < COLS; x++) {
+        let h = 0;
+        for (const s of SOURCES) h += s.a * gauss(x, y, s.x, s.y, s.s, s.s * 1.5);
+        let t: number;
+        switch (mode) {
+          case 'none':
+            t = 38 + 15 * h + 8 * strat;
+            break;
+          case 'fan':
+            t = 36.5 + 7 * h + 5 * strat - 3 * gauss(x, y, 12, 39, 8, 4);
+            break;
+          case 'ac':
+            t = 25 + 7 * h + 2 * strat - 8 * gauss(x, y, 12, 1, 6, 6) - 3 * gauss(x, y, 21, 14, 2.5, 10);
+            break;
+          case 'heater':
+            t = -2 + 3 * h + 3 * strat + 14 * gauss(x, y, 12, 35, 5, 3) + 5 * gauss(x, y, 12, 26, 4, 8);
+            break;
+        }
+        field[y * COLS + x] = t;
+      }
+    }
+    return field;
+  }
+
+  const fmt = (t: number) => `${t > 0.05 ? '+' : t < -0.05 ? '−' : ''}${Math.abs(t).toFixed(1)} °C`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-thermal]')) {
+    const canvas = root.querySelector<HTMLCanvasElement>('[data-canvas]')!;
+    const stage = root.querySelector<HTMLElement>('[data-stage]')!;
+    const probe = root.querySelector<HTMLOutputElement>('[data-probe]')!;
+    const maxEl = root.querySelector<HTMLElement>('[data-max]')!;
+    const ambientEl = root.querySelector<HTMLElement>('[data-ambient]')!;
+    const inputs = root.querySelectorAll<HTMLInputElement>('input[name="thermal-mode"]');
+
+    const ctx = canvas.getContext('2d')!;
+    const small = document.createElement('canvas');
+    small.width = COLS;
+    small.height = ROWS;
+    const sctx = small.getContext('2d')!;
+    const image = sctx.createImageData(COLS, ROWS);
+
+    const fields = Object.fromEntries(
+      (['none', 'fan', 'ac', 'heater'] as Mode[]).map((m) => [m, buildField(m)]),
+    ) as Record<Mode, Float32Array>;
+
+    let current = new Float32Array(COLS * ROWS);
+    let frame = 0;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function draw(field: Float32Array) {
+      let max = -Infinity;
+      for (let i = 0; i < field.length; i++) {
+        const [r, g, b] = colorOf(field[i]);
+        image.data.set([r, g, b, 255], i * 4);
+        if (field[i] > max) max = field[i];
+      }
+      sctx.putImageData(image, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(small, 0, 0, canvas.width, canvas.height);
+      maxEl.textContent = fmt(max);
+    }
+
+    function transition(to: Float32Array, duration: number) {
+      cancelAnimationFrame(frame);
+      const from = current.slice();
+      if (reduceMotion || duration === 0) {
+        current = to.slice();
+        draw(current);
+        return;
+      }
+      const start = performance.now();
+      const step = (now: number) => {
+        const p = Math.min(1, (now - start) / duration);
+        const e = 1 - (1 - p) ** 3;
+        for (let i = 0; i < to.length; i++) current[i] = from[i] + (to[i] - from[i]) * e;
+        draw(current);
+        if (p < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    }
+
+    function select(input: HTMLInputElement, duration: number) {
+      const mode = input.value as Mode;
+      root.dataset.mode = mode;
+      ambientEl.textContent = fmt(Number(input.dataset.ambient));
+      transition(fields[mode], duration);
+    }
+
+    for (const input of inputs) input.addEventListener('change', () => select(input, 700));
+
+    // Единственная анимация при загрузке: шкаф «прогревается» от температуры снаружи
+    const initial = [...inputs].find((i) => i.checked) ?? inputs[0];
+    current.fill(Number(initial.dataset.ambient));
+    draw(current);
+    select(initial, 1600);
+
+    // Щуп: температура в точке под курсором
+    stage.addEventListener('pointermove', (e) => {
+      const rect = stage.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const col = Math.min(COLS - 1, Math.max(0, Math.floor((px / rect.width) * COLS)));
+      const row = Math.min(ROWS - 1, Math.max(0, Math.floor((py / rect.height) * ROWS)));
+      probe.hidden = false;
+      probe.textContent = fmt(current[row * COLS + col]);
+      const flip = px > rect.width * 0.55;
+      probe.style.left = `${px}px`;
+      probe.style.top = `${py}px`;
+      probe.style.transform = flip ? 'translate(calc(-100% - 12px), -50%)' : 'translate(12px, -50%)';
+    });
+    stage.addEventListener('pointerleave', () => (probe.hidden = true));
+  }
+</script>

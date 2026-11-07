@@ -1,164 +1,82 @@
 ---
-import { catalog } from '../data/catalog';
-
-const groupCount = catalog.reduce((sum, c) => sum + c.groups.length, 0);
+import ThermalDemo from './ThermalDemo.astro';
 ---
 
 <section class="hero">
   <div class="container hero__inner">
     <div class="hero__text">
-      <span class="eyebrow">Термоменеджмент для электрошкафов</span>
-      <h1>Климат-контроль для&nbsp;электротехнических шкафов и&nbsp;серверных стоек</h1>
+      <h1>Держим электрошкаф в&nbsp;рабочей температуре</h1>
       <p class="hero__lead">
-        Кондиционеры, вентиляторы, нагреватели и устройства управления, которые поддерживают
-        рабочую температуру и влажность оборудования в любых условиях.
+        Кондиционеры, вентиляторы и нагреватели для шкафов автоматики, телекоммуникационных
+        и серверных стоек. Подберём оборудование под тепловую нагрузку и условия на объекте.
       </p>
       <div class="hero__actions">
-        <a href="#catalog" class="btn btn--primary">Перейти в каталог</a>
-        <a href="#contact" class="btn btn--ghost">Подобрать оборудование</a>
+        <a href="#contact" class="btn btn--primary">Подобрать оборудование</a>
+        <a href="#catalog" class="btn btn--secondary">Открыть каталог</a>
       </div>
-      <ul class="hero__facts">
-        <li><strong>{catalog.length}</strong> направления продукции</li>
-        <li><strong>{groupCount}</strong> групп продукции</li>
-        <li><strong>Подбор</strong> и расчёт тепловой нагрузки</li>
-      </ul>
     </div>
 
-    <div class="hero__visual" aria-hidden="true">
-      <svg viewBox="0 0 360 400" fill="none">
-        <defs>
-          <linearGradient id="cab" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#1b4f80" />
-            <stop offset="1" stop-color="#0d3459" />
-          </linearGradient>
-        </defs>
-        <!-- шкаф -->
-        <rect x="90" y="40" width="180" height="320" rx="10" fill="url(#cab)" stroke="#3d73a6" stroke-width="2" />
-        <rect x="108" y="64" width="144" height="40" rx="4" fill="#0a2a4a" />
-        <rect x="108" y="116" width="144" height="40" rx="4" fill="#0a2a4a" />
-        <rect x="108" y="168" width="144" height="40" rx="4" fill="#0a2a4a" />
-        <rect x="108" y="220" width="144" height="40" rx="4" fill="#0a2a4a" />
-        <g fill="#1aa3d9">
-          <circle cx="122" cy="84" r="4" /><circle cx="122" cy="136" r="4" />
-          <circle cx="122" cy="188" r="4" /><circle cx="122" cy="240" r="4" />
-        </g>
-        <g fill="#4a7aa6">
-          <rect x="136" y="81" width="60" height="6" rx="3" /><rect x="136" y="133" width="80" height="6" rx="3" />
-          <rect x="136" y="185" width="50" height="6" rx="3" /><rect x="136" y="237" width="70" height="6" rx="3" />
-        </g>
-        <!-- вентиляционная решётка -->
-        <g stroke="#3d73a6" stroke-width="3" stroke-linecap="round">
-          <path d="M120 292h120M120 306h120M120 320h120M120 334h120" />
-        </g>
-        <!-- холодный поток -->
-        <g stroke="#1aa3d9" stroke-width="3" stroke-linecap="round" class="flow flow--cold">
-          <path d="M20 300c30 0 40-20 70-20" />
-          <path d="M10 330c40 0 50-20 80-20" />
-          <path d="M30 360c30 0 40-14 60-14" />
-        </g>
-        <!-- тёплый поток -->
-        <g stroke="#e8752a" stroke-width="3" stroke-linecap="round" class="flow flow--warm">
-          <path d="M270 70c30 0 40-20 70-20" />
-          <path d="M270 100c40 0 50-20 80-20" />
-          <path d="M270 130c30 0 40-14 60-14" />
-        </g>
-        <!-- индикатор температуры -->
-        <g transform="translate(222 300)">
-          <rect x="-8" y="-16" width="96" height="44" rx="8" fill="#fff" />
-          <text x="40" y="13" text-anchor="middle" font-family="Inter, sans-serif" font-size="20" font-weight="700" fill="#0b3a66">+35 °C</text>
-        </g>
-      </svg>
-    </div>
+    <ThermalDemo />
   </div>
 </section>
 
 <style>
   .hero {
-    color: #fff;
-    background:
-      radial-gradient(1200px 500px at 85% 0%, rgb(26 163 217 / 0.25), transparent 60%),
-      linear-gradient(160deg, var(--color-brand) 0%, var(--color-brand-deep) 100%);
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* Сетка инженерного чертежа, растворяется к низу секции */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(to bottom, #000 40%, transparent);
   }
 
   .hero__inner {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
     align-items: center;
-    gap: 48px;
-    padding-block: clamp(56px, 9vw, 112px);
-  }
-
-  .hero .eyebrow {
-    color: #7fd3f2;
+    gap: clamp(32px, 5vw, 72px);
+    padding-block: clamp(48px, 7vw, 96px);
   }
 
   .hero h1 {
-    font-size: clamp(32px, 4.6vw, 54px);
-    font-weight: 700;
+    max-width: 12ch;
+    font-size: clamp(40px, 5.2vw, 76px);
+    overflow-wrap: break-word;
+    font-weight: 600;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
   }
 
   .hero__lead {
-    margin-top: 20px;
-    max-width: 580px;
-    font-size: clamp(17px, 1.6vw, 20px);
-    color: rgb(255 255 255 / 0.8);
+    max-width: 46ch;
+    margin-top: 28px;
+    font-size: clamp(17px, 1.5vw, 20px);
+    color: var(--ink-muted);
   }
 
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 32px;
+    margin-top: 36px;
   }
 
-  .hero__facts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px 40px;
-    margin: 48px 0 0;
-    padding: 24px 0 0;
-    list-style: none;
-    border-top: 1px solid rgb(255 255 255 / 0.15);
-    color: rgb(255 255 255 / 0.7);
-    font-size: 14px;
-  }
-
-  .hero__facts strong {
-    display: block;
-    font-size: 26px;
-    color: #fff;
-  }
-
-  .hero__visual svg {
-    width: 100%;
-    max-width: 380px;
-    margin-inline: auto;
-  }
-
-  .flow path {
-    stroke-dasharray: 8 10;
-    animation: flow 1.6s linear infinite;
-  }
-
-  @keyframes flow {
-    to {
-      stroke-dashoffset: -36;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .flow path {
-      animation: none;
-    }
-  }
-
-  @media (max-width: 900px) {
+  @media (max-width: 1040px) {
     .hero__inner {
       grid-template-columns: 1fr;
     }
 
-    .hero__visual {
-      display: none;
+    .hero h1 {
+      max-width: 14ch;
     }
   }
 </style>

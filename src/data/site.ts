@@ -6,38 +6,56 @@ export interface NavLink {
   description?: string;
 }
 
-export const support: NavLink[] = [
+export interface NavGroup {
+  title: string;
+  links: NavLink[];
+}
+
+/** «Поддержка», разбитая по задаче посетителя: выбрать оборудование или эксплуатировать его. */
+export const supportGroups: NavGroup[] = [
   {
-    title: 'Документация',
-    href: '/support/docs/',
-    description: 'Паспорта, инструкции, чертежи и сертификаты.',
+    title: 'Выбор оборудования',
+    links: [
+      {
+        title: 'Подбор и расчеты',
+        href: '/support/selection/',
+        description: 'Расчёт тепловой нагрузки и подбор модели под ваш шкаф.',
+      },
+      {
+        title: 'Сферы применения',
+        href: '/support/applications/',
+        description: 'Типовые решения для разных отраслей и условий на объекте.',
+      },
+      {
+        title: 'Статьи и обзоры',
+        href: '/support/articles/',
+        description: 'Как охлаждать, вентилировать и обогревать шкафы.',
+      },
+    ],
   },
   {
-    title: 'Подбор и расчеты',
-    href: '/support/selection/',
-    description: 'Расчёт тепловой нагрузки и подбор оборудования под шкаф.',
-  },
-  {
-    title: 'Сферы применения',
-    href: '/support/applications/',
-    description: 'Типовые решения для разных отраслей и условий эксплуатации.',
-  },
-  {
-    title: 'Статьи и обзоры',
-    href: '/support/articles/',
-    description: 'Как правильно охлаждать, вентилировать и обогревать шкафы.',
-  },
-  {
-    title: 'Сервис и гарантия',
-    href: '/support/service/',
-    description: 'Гарантийные условия, ремонт и обслуживание.',
-  },
-  {
-    title: 'Частые вопросы',
-    href: '/support/faq/',
-    description: 'Ответы на типовые вопросы по выбору и монтажу.',
+    title: 'Эксплуатация',
+    links: [
+      {
+        title: 'Документация',
+        href: '/support/docs/',
+        description: 'Паспорта, инструкции, чертежи и сертификаты.',
+      },
+      {
+        title: 'Сервис и гарантия',
+        href: '/support/service/',
+        description: 'Гарантийные условия, ремонт и обслуживание.',
+      },
+      {
+        title: 'Частые вопросы',
+        href: '/support/faq/',
+        description: 'Ответы на типовые вопросы по выбору и монтажу.',
+      },
+    ],
   },
 ];
+
+export const support: NavLink[] = supportGroups.flatMap((g) => g.links);
 
 export const company: NavLink[] = [
   { title: 'История компании', href: '/company/history/' },
