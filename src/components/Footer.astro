@@ -1,0 +1,108 @@
+---
+import Logo from './Logo.astro';
+import { catalog, categoryUrl } from '../data/catalog';
+import { support, company } from '../data/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <Logo inverse />
+        <p>Оборудование для климат-контроля электротехнических шкафов и стоек.</p>
+      </div>
+
+      <nav aria-label="Продукция">
+        <h3>Продукция</h3>
+        <ul>
+          {catalog.map((c) => <li><a href={categoryUrl(c)}>{c.title}</a></li>)}
+        </ul>
+      </nav>
+
+      <nav aria-label="Поддержка">
+        <h3>Поддержка</h3>
+        <ul>
+          {support.map((l) => <li><a href={l.href}>{l.title}</a></li>)}
+        </ul>
+      </nav>
+
+      <nav aria-label="Компания">
+        <h3>Компания</h3>
+        <ul>
+          {company.map((l) => <li><a href={l.href}>{l.title}</a></li>)}
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__bottom">© {year} Silart</div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding-block: 56px 32px;
+    background: #061d35;
+    color: rgb(255 255 255 / 0.65);
+    font-size: 15px;
+  }
+
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 1.4fr repeat(3, 1fr);
+    gap: 32px;
+  }
+
+  .footer__brand p {
+    margin-top: 16px;
+    max-width: 280px;
+  }
+
+  .footer h3 {
+    margin-bottom: 14px;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .footer ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer a {
+    text-decoration: none;
+  }
+
+  .footer a:hover {
+    color: #fff;
+  }
+
+  .footer__bottom {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    font-size: 14px;
+  }
+
+  @media (max-width: 900px) {
+    .footer__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

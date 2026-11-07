@@ -1,0 +1,82 @@
+---
+import { support } from '../data/site';
+---
+
+<section id="support" class="section section--surface">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Поддержка</span>
+      <h2>Помогаем на каждом этапе</h2>
+      <p>От расчёта тепловой нагрузки и выбора модели до монтажа, сервиса и гарантии.</p>
+    </div>
+
+    <ul class="support">
+      {support.map((item, i) => (
+        <li>
+          <a href={item.href}>
+            <span class="support__num">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{item.title}</h3>
+            <p>{item.description}</p>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .support {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .support a {
+    display: block;
+    height: 100%;
+    padding: 28px;
+    border-radius: var(--radius);
+    background: #fff;
+    text-decoration: none;
+    transition: box-shadow 0.2s;
+  }
+
+  .support a:hover {
+    box-shadow: var(--shadow);
+  }
+
+  .support a:hover h3 {
+    color: var(--color-accent);
+  }
+
+  .support__num {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .support h3 {
+    margin-top: 12px;
+    font-size: 20px;
+  }
+
+  .support p {
+    margin-top: 8px;
+    color: var(--color-ink-muted);
+  }
+
+  @media (max-width: 900px) {
+    .support {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .support {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

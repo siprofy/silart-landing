@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import CatalogSection from '../components/CatalogSection.astro';
+import SupportSection from '../components/SupportSection.astro';
+import CompanySection from '../components/CompanySection.astro';
+import ContactSection from '../components/ContactSection.astro';
+---
+
+<BaseLayout
+  title="Silart — климат-контроль для электротехнических шкафов и стоек"
+  description="Кондиционеры, вентиляторы, нагреватели и устройства управления для электротехнических шкафов и серверных стоек. Подбор оборудования и расчёт тепловой нагрузки."
+>
+  <Hero />
+  <CatalogSection />
+  <SupportSection />
+  <CompanySection />
+  <ContactSection />
+</BaseLayout>

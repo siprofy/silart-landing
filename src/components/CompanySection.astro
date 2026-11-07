@@ -1,0 +1,65 @@
+---
+import { company } from '../data/site';
+---
+
+<section id="company" class="section">
+  <div class="container company">
+    <div class="section-head">
+      <span class="eyebrow">Компания</span>
+      <h2>Собственное производство оборудования для климат-контроля</h2>
+      <p>
+        Разрабатываем и выпускаем оборудование для термоменеджмента электротехнических шкафов
+        и телекоммуникационных стоек.
+      </p>
+    </div>
+
+    <ul class="company__links">
+      {company.map((link) => (
+        <li><a href={link.href}>{link.title}<span aria-hidden="true">→</span></a></li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .company {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .company .section-head {
+    margin-bottom: 0;
+  }
+
+  .company__links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .company__links a {
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-line);
+    font-size: 18px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s, padding 0.15s;
+  }
+
+  .company__links a:hover {
+    padding-inline: 8px;
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 800px) {
+    .company {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+</style>

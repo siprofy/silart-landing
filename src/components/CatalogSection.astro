@@ -1,0 +1,139 @@
+---
+import Icon from './Icon.astro';
+import { catalog, categoryUrl, groupUrl } from '../data/catalog';
+---
+
+<section id="catalog" class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Продукция</span>
+      <h2>Всё для микроклимата внутри шкафа</h2>
+      <p>Охлаждение, вентиляция, обогрев и управление — оборудование одной системы, которое легко сочетать между собой.</p>
+    </div>
+
+    <div class="catalog">
+      {catalog.map((category) => (
+        <article class:list={['card', `card--${category.icon}`]}>
+          <div class="card__icon"><Icon name={category.icon} /></div>
+          <h3><a href={categoryUrl(category)}>{category.title}</a></h3>
+          <p class="card__summary">{category.summary}</p>
+          <ul class="card__groups">
+            {category.groups.map((group) => (
+              <li>
+                <a href={groupUrl(category, group)}>{group.title}</a>
+                <span>{group.items.join(' · ')}</span>
+              </li>
+            ))}
+          </ul>
+          <a href={categoryUrl(category)} class="card__more">Все {category.title.toLowerCase()} →</a>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .catalog {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    padding: 32px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius);
+    background: #fff;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .card:hover {
+    border-color: transparent;
+    box-shadow: var(--shadow);
+  }
+
+  .card__icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 20px;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  .card--heat .card__icon {
+    background: var(--color-heat-soft);
+    color: var(--color-heat);
+  }
+
+  .card--control .card__icon {
+    background: #e8edf3;
+    color: var(--color-brand);
+  }
+
+  .card h3 {
+    font-size: 24px;
+  }
+
+  .card h3 a {
+    text-decoration: none;
+  }
+
+  .card__summary {
+    margin-top: 8px;
+    color: var(--color-ink-muted);
+  }
+
+  .card__groups {
+    display: grid;
+    gap: 2px;
+    margin: 24px 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .card__groups li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 16px;
+    padding: 10px 0;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .card__groups a {
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .card__groups a:hover,
+  .card h3 a:hover {
+    color: var(--color-accent);
+  }
+
+  .card__groups span {
+    font-size: 14px;
+    color: var(--color-ink-muted);
+  }
+
+  .card__more {
+    margin-top: auto;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 800px) {
+    .catalog {
+      grid-template-columns: 1fr;
+    }
+
+    .card {
+      padding: 24px;
+    }
+  }
+</style>
