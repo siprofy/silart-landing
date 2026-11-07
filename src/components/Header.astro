@@ -2,6 +2,9 @@
 import Logo from './Logo.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import { mainNav } from '../data/site';
+import { url } from '../lib/url';
+
+const contactHref = url('/#contact');
 ---
 
 <header class="header">
@@ -18,7 +21,7 @@ import { mainNav } from '../data/site';
 
     <div class="header__tools">
       <ThemeToggle />
-      <a href="/#contact" class="btn btn--primary header__cta">Подобрать оборудование</a>
+      <a href={contactHref} class="btn btn--primary header__cta">Подобрать оборудование</a>
 
       <details class="header__mobile">
         <summary aria-label="Меню">
@@ -30,7 +33,7 @@ import { mainNav } from '../data/site';
               <li><a href={link.href}>{link.title}</a></li>
             ))}
           </ul>
-          <a href="/#contact" class="btn btn--primary">Подобрать оборудование</a>
+          <a href={contactHref} class="btn btn--primary">Подобрать оборудование</a>
         </nav>
       </details>
     </div>

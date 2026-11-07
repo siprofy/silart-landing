@@ -1,6 +1,6 @@
 # ADR-0005: Хостинг — Render Static Site
 
-- **Статус:** Принято
+- **Статус:** Заменено [ADR-0006](0006-hosting-github-pages.md)
 - **Дата:** 2026-11-07
 - **Связанные ADR:** [ADR-0002](0002-site-architecture-approach.md), [ADR-0003](0003-static-site-generator-choice.md)
 

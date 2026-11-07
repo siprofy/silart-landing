@@ -21,7 +21,7 @@
 - [Astro](https://astro.build) 7 + TypeScript, статическая сборка
 - Обычный CSS с дизайн-токенами в CSS-переменных (`src/styles/global.css`), светлая и тёмная
   темы — см. [ADR-0004](docs/adr/0004-visual-language-and-themes.md)
-- Хостинг — Render Static Site ([ADR-0005](docs/adr/0005-hosting-render.md))
+- Хостинг — GitHub Pages ([ADR-0006](docs/adr/0006-hosting-github-pages.md))
 
 ## Быстрый старт
 
@@ -62,9 +62,13 @@ src/
 
 ## Деплой
 
-Сайт публикуется на Render как Static Site: каждый push в `main` автоматически
-собирается (`npm ci && npm run build`) и выкладывается из папки `dist/`.
-Версия Node.js для сборки задана в `.node-version`.
+Сайт: https://siprofy.github.io/silart-landing/
+
+Каждый push в `main` автоматически собирается и публикуется на GitHub Pages
+(`.github/workflows/deploy.yml`). Версия Node.js для сборки задана в `.node-version`.
+
+Сайт живёт в подпапке, поэтому внутренние ссылки пишутся только через `url()`
+из `src/lib/url.ts`, а не строкой `"/..."`.
 
 ## Работа с репозиторием
 

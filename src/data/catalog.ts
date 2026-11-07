@@ -1,6 +1,8 @@
 // Структура каталога по docs/site-structure.md.
 // Слаги и URL предварительные — схема URL будет зафиксирована отдельным ADR.
 
+import { url } from '../lib/url';
+
 /** Место направления на тепловой шкале сайта: задаёт цвет маркера. */
 export type ThermalTone = 'cold' | 'air' | 'hot' | 'neutral';
 
@@ -82,5 +84,5 @@ export const catalog: Category[] = [
   },
 ];
 
-export const categoryUrl = (c: Category) => `/products/${c.slug}/`;
-export const groupUrl = (c: Category, g: ProductGroup) => `/products/${c.slug}/${g.slug}/`;
+export const categoryUrl = (c: Category) => url(`/products/${c.slug}/`);
+export const groupUrl = (c: Category, g: ProductGroup) => url(`/products/${c.slug}/${g.slug}/`);
