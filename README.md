@@ -21,7 +21,7 @@
 - [Astro](https://astro.build) 7 + TypeScript, статическая сборка
 - Обычный CSS с дизайн-токенами в CSS-переменных (`src/styles/global.css`), светлая и тёмная
   темы — см. [ADR-0004](docs/adr/0004-visual-language-and-themes.md)
-- Хостинг — будет выбран отдельным ADR
+- Хостинг — Render Static Site ([ADR-0005](docs/adr/0005-hosting-render.md))
 
 ## Быстрый старт
 
@@ -62,7 +62,9 @@ src/
 
 ## Деплой
 
-<!-- Куда и как публикуется сайт — после ADR о хостинге. -->
+Сайт публикуется на Render как Static Site: каждый push в `main` автоматически
+собирается (`npm ci && npm run build`) и выкладывается из папки `dist/`.
+Версия Node.js для сборки задана в `.node-version`.
 
 ## Работа с репозиторием
 
