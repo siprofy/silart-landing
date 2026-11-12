@@ -1,0 +1,19 @@
+# В контекст сборки попадает только то, что нужно для npm ci и astro build
+node_modules
+dist
+.astro
+.git
+.github
+.claude
+.vscode
+.idea
+docs
+*.md
+*.log
+.env
+.env.*
+Dockerfile*
+compose*.yaml
+docker-compose*.yml
+.DS_Store
+Thumbs.db

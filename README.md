@@ -12,6 +12,7 @@
 | Документ | Содержание |
 |----------|------------|
 | [docs/site-structure.md](docs/site-structure.md) | Карта разделов сайта и каталога |
+| [docs/docker.md](docs/docker.md) | Docker: сборка, проверка и публикация образа |
 | [docs/adr/](docs/adr/README.md) | Архитектурные решения (ADR): процесс, шаблон, индекс |
 
 Все значимые решения принимаются через ADR — см. [ADR-0001](docs/adr/0001-record-architecture-decisions.md).
@@ -66,6 +67,9 @@ src/
 
 Каждый push в `main` автоматически собирается и публикуется на GitHub Pages
 (`.github/workflows/deploy.yml`). Версия Node.js для сборки задана в `.node-version`.
+
+Также сайт можно запустить в Docker (`docker compose up --build -d` → http://localhost:8080) —
+подробно в [docs/docker.md](docs/docker.md).
 
 Сайт живёт в подпапке, поэтому внутренние ссылки пишутся только через `url()`
 из `src/lib/url.ts`, а не строкой `"/..."`.

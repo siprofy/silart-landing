@@ -1,0 +1,23 @@
+# Локальный запуск собранного образа: docker compose up --build
+# Подробности — docs/docker.md
+services:
+  web:
+    build:
+      context: .
+      args:
+        SITE_URL: ${SITE_URL:-https://silart.com}
+        BASE_PATH: ${BASE_PATH:-/}
+    image: silart-landing:${TAG:-local}
+    ports:
+      # По умолчанию сайт доступен только с этого компьютера.
+      # На сервере: BIND_ADDR=0.0.0.0 (или оставить 127.0.0.1 за обратным прокси).
+      - "${BIND_ADDR:-127.0.0.1}:${PORT:-8080}:8080"
+    restart: unless-stopped
+    # Укрепление контейнера: файловая система только на чтение, без лишних прав
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
