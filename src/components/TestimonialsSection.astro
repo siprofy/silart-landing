@@ -2,19 +2,42 @@
 // Карусель отзывов. Без зависимостей: прокрутка со scroll-snap (свайп на телефоне)
 // + кнопки, точки и стрелки клавиатуры. Без автопрокрутки — она мешает читать и
 // плохо сказывается на доступности.
-import { testimonials, demoTestimonials } from '../data/testimonials';
+//
+// Без пропсов выводит отзывы клиентов (главная). Через пропсы — любой набор,
+// например отзывы сотрудников на странице «Карьера». Слот — для блока между
+// заголовком и лентой (сводка оценок и т. п.).
+import { testimonials, demoTestimonials, type Testimonial } from '../data/testimonials';
 
-const isDemo = testimonials.length === 0 && import.meta.env.DEV;
-const items = isDemo ? demoTestimonials : testimonials;
+interface Props {
+  items?: Testimonial[];
+  id?: string;
+  title?: string;
+  lead?: string;
+  /** Подпись ленты для экранных дикторов */
+  label?: string;
+}
+
+const isClientDefault = Astro.props.items === undefined;
+const isDemo = isClientDefault && testimonials.length === 0 && import.meta.env.DEV;
+const items = isClientDefault ? (isDemo ? demoTestimonials : testimonials) : Astro.props.items!;
+
+const {
+  id = 'testimonials',
+  title = 'Отзывы клиентов',
+  lead = 'Что говорят инженеры и сборщики шкафов, которые работают с Silart.',
+  label = title,
+} = Astro.props;
+
+const stars = (rating: number) => `Оценка ${rating.toLocaleString('ru-RU')} из 5`;
 ---
 
 {items.length > 0 && (
-  <section id="testimonials" class="block">
+  <section id={id} class="block">
     <div class="container">
       <div class="t-head">
         <div>
-          <h2>Отзывы клиентов</h2>
-          <p class="block__lead">Что говорят инженеры и сборщики шкафов, которые работают с Silart.</p>
+          <h2>{title}</h2>
+          <p class="block__lead">{lead}</p>
         </div>
         <div class="t-nav" data-carousel-nav>
           <button type="button" class="t-btn" data-prev aria-label="Предыдущий отзыв">
@@ -33,12 +56,14 @@ const items = isDemo ? demoTestimonials : testimonials;
         </p>
       )}
 
+      <slot />
+
       <div
         class="t-carousel"
         data-carousel
         role="region"
         aria-roledescription="карусель"
-        aria-label="Отзывы клиентов"
+        aria-label={label}
       >
         <ul class="t-track" data-track tabindex="0">
           {items.map((t, i) => (
@@ -50,9 +75,17 @@ const items = isDemo ? demoTestimonials : testimonials;
             >
               <figure class="t-card">
                 {isDemo && <span class="t-demo-badge">Пример</span>}
-                <svg class="t-quote-mark" viewBox="0 0 32 24" aria-hidden="true">
-                  <path d="M0 24V14C0 6 4 1 12 0l1 4c-4 1-6 4-6 8h6v12H0zm19 0V14c0-8 4-13 12-14l1 4c-4 1-6 4-6 8h6v12H19z" fill="currentColor" />
-                </svg>
+                <div class="t-top">
+                  <svg class="t-quote-mark" viewBox="0 0 32 24" aria-hidden="true">
+                    <path d="M0 24V14C0 6 4 1 12 0l1 4c-4 1-6 4-6 8h6v12H0zm19 0V14c0-8 4-13 12-14l1 4c-4 1-6 4-6 8h6v12H19z" fill="currentColor" />
+                  </svg>
+                  {t.rating !== undefined && (
+                    <span class="t-rating" role="img" aria-label={stars(t.rating)}>
+                      <span class="t-rating__stars" style={`--r: ${t.rating}`} aria-hidden="true">★★★★★</span>
+                      <span aria-hidden="true">{t.rating.toLocaleString('ru-RU', { minimumFractionDigits: 1 })}</span>
+                    </span>
+                  )}
+                </div>
                 <blockquote>
                   <p>{t.quote}</p>
                 </blockquote>
@@ -61,7 +94,13 @@ const items = isDemo ? demoTestimonials : testimonials;
                   {(t.role || t.company) && (
                     <span class="t-meta">{[t.role, t.company].filter(Boolean).join(', ')}</span>
                   )}
+                  {t.date && <span class="t-meta">{t.date}</span>}
                   {t.project && <span class="t-project">{t.project}</span>}
+                  {t.sourceUrl && (
+                    <a class="t-source" href={t.sourceUrl} target="_blank" rel="noopener">
+                      {t.sourceLabel ?? 'Источник'}
+                    </a>
+                  )}
                 </figcaption>
               </figure>
             </li>
@@ -238,6 +277,43 @@ const items = isDemo ? demoTestimonials : testimonials;
     height: 3px;
     border-radius: 0 0 3px 3px;
     background: linear-gradient(90deg, var(--t-cold), var(--t-mild), var(--t-hot));
+  }
+
+  .t-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .t-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Звёзды с дробным заполнением: --r от 0 до 5 */
+  .t-rating__stars {
+    font-size: 15px;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--t-warm) calc(var(--r) / 5 * 100%), var(--line) 0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .t-source {
+    margin-top: 8px;
+    justify-self: start;
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .t-source:hover {
+    text-decoration: underline;
   }
 
   .t-quote-mark {

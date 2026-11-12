@@ -15,6 +15,13 @@ export interface Testimonial {
   company?: string;
   /** Что поставляли или какую задачу решали — например, «Кондиционеры OTS для шкафов АСУ ТП» */
   project?: string;
+  /** Оценка от 0 до 5, если отзыв с внешней площадки */
+  rating?: number;
+  /** Дата отзыва в свободной форме, например «сентябрь 2026» */
+  date?: string;
+  /** Ссылка на оригинал отзыва */
+  sourceUrl?: string;
+  sourceLabel?: string;
 }
 
 export const testimonials: Testimonial[] = [

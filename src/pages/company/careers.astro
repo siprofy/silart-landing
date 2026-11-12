@@ -1,7 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/PageHeader.astro';
+import TestimonialsSection from '../../components/TestimonialsSection.astro';
 import { careers, contacts } from '../../data/company';
+import { employeeReviews, employeeRatings as er, dreamJobUrl } from '../../data/employee-reviews';
+
+const fmt = (n: number) => n.toLocaleString('ru-RU', { minimumFractionDigits: 1 });
 import { url } from '../../lib/url';
 ---
 
@@ -37,6 +41,38 @@ import { url } from '../../lib/url';
       </ul>
     </div>
   </section>
+
+  <TestimonialsSection
+    id="reviews"
+    items={employeeReviews}
+    title="Отзывы сотрудников"
+    lead={`${er.recommend} % сотрудников рекомендуют Silart как работодателя — по ${er.total} отзывам на DreamJob.`}
+    label="Отзывы сотрудников"
+  >
+    <div class="er">
+      <div class="er__score">
+        <span class="er__value">{fmt(er.rating)}</span>
+        <span class="er__of">из 5</span>
+        <span class="er__note">средняя оценка, {er.total} отзывов</span>
+      </div>
+      <dl class="er__cats">
+        {er.categories.map((c) => (
+          <div>
+            <dt>{c.title}</dt>
+            <dd>
+              <span class="er__bar" style={`--v: ${c.value}`} aria-hidden="true"></span>
+              <span>{fmt(c.value)}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+    <p class="er__disclaimer">
+      Кратко пересказываем отзывы своими словами; оценки, должности и даты — как на{' '}
+      <a href={dreamJobUrl} target="_blank" rel="noopener">DreamJob</a> ({er.asOf}). Там же — полные
+      тексты всех отзывов, включая пожелания к компании.
+    </p>
+  </TestimonialsSection>
 
   <section class="block">
     <div class="container split">
@@ -107,6 +143,98 @@ import { url } from '../../lib/url';
 
   .block__lead a {
     color: var(--accent);
+  }
+
+  /* Сводка оценок DreamJob */
+  .er {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: center;
+    margin-top: clamp(28px, 4vw, 40px);
+    padding: clamp(20px, 3vw, 28px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .er__score {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    column-gap: 8px;
+  }
+
+  .er__value {
+    font-size: clamp(48px, 6vw, 72px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .er__of {
+    color: var(--ink-muted);
+  }
+
+  .er__note {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  .er__cats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 32px;
+    margin: 0;
+  }
+
+  .er__cats div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .er__cats dt {
+    font-size: 15px;
+    color: var(--ink-muted);
+  }
+
+  .er__cats dd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .er__bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent) calc(var(--v) / 5 * 100%), var(--surface-2) 0);
+  }
+
+  .er__disclaimer {
+    max-width: 80ch;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  .er__disclaimer a {
+    color: var(--accent);
+  }
+
+  @media (max-width: 700px) {
+    .er {
+      grid-template-columns: 1fr;
+    }
+
+    .er__cats {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 860px) {
