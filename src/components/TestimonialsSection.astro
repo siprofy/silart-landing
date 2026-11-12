@@ -1,0 +1,355 @@
+---
+// Карусель отзывов. Без зависимостей: прокрутка со scroll-snap (свайп на телефоне)
+// + кнопки, точки и стрелки клавиатуры. Без автопрокрутки — она мешает читать и
+// плохо сказывается на доступности.
+import { testimonials, demoTestimonials } from '../data/testimonials';
+
+const isDemo = testimonials.length === 0 && import.meta.env.DEV;
+const items = isDemo ? demoTestimonials : testimonials;
+---
+
+{items.length > 0 && (
+  <section id="testimonials" class="block">
+    <div class="container">
+      <div class="t-head">
+        <div>
+          <h2>Отзывы клиентов</h2>
+          <p class="block__lead">Что говорят инженеры и сборщики шкафов, которые работают с Silart.</p>
+        </div>
+        <div class="t-nav" data-carousel-nav>
+          <button type="button" class="t-btn" data-prev aria-label="Предыдущий отзыв">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <button type="button" class="t-btn" data-next aria-label="Следующий отзыв">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </div>
+      </div>
+
+      {isDemo && (
+        <p class="t-demo-note" role="note">
+          Режим разработки: показаны примеры. Добавьте настоящие отзывы в src/data/testimonials.ts —
+          до этого секции нет в production-сборке.
+        </p>
+      )}
+
+      <div
+        class="t-carousel"
+        data-carousel
+        role="region"
+        aria-roledescription="карусель"
+        aria-label="Отзывы клиентов"
+      >
+        <ul class="t-track" data-track tabindex="0">
+          {items.map((t, i) => (
+            <li
+              class="t-slide"
+              role="group"
+              aria-roledescription="слайд"
+              aria-label={`${i + 1} из ${items.length}`}
+            >
+              <figure class="t-card">
+                {isDemo && <span class="t-demo-badge">Пример</span>}
+                <svg class="t-quote-mark" viewBox="0 0 32 24" aria-hidden="true">
+                  <path d="M0 24V14C0 6 4 1 12 0l1 4c-4 1-6 4-6 8h6v12H0zm19 0V14c0-8 4-13 12-14l1 4c-4 1-6 4-6 8h6v12H19z" fill="currentColor" />
+                </svg>
+                <blockquote>
+                  <p>{t.quote}</p>
+                </blockquote>
+                <figcaption>
+                  <span class="t-author">{t.author}</span>
+                  {(t.role || t.company) && (
+                    <span class="t-meta">{[t.role, t.company].filter(Boolean).join(', ')}</span>
+                  )}
+                  {t.project && <span class="t-project">{t.project}</span>}
+                </figcaption>
+              </figure>
+            </li>
+          ))}
+        </ul>
+
+        <div class="t-dots" data-dots>
+          {items.map((_, i) => (
+            <button type="button" class="t-dot" data-dot={i} aria-label={`Отзыв ${i + 1}`}></button>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+<script>
+  function initCarousel(root: HTMLElement) {
+    const section = root.closest('section');
+    const track = root.querySelector<HTMLElement>('[data-track]');
+    if (!section || !track) return;
+
+    const slides = Array.from(track.children) as HTMLElement[];
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+    const prev = section.querySelector<HTMLButtonElement>('[data-prev]');
+    const next = section.querySelector<HTMLButtonElement>('[data-next]');
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const behavior: ScrollBehavior = reduceMotion ? 'auto' : 'smooth';
+
+    // Индекс первого видимого слайда — по положению прокрутки
+    const current = () => {
+      const left = track.scrollLeft;
+      let best = 0;
+      slides.forEach((s, i) => {
+        if (Math.abs(s.offsetLeft - track.offsetLeft - left) < Math.abs(slides[best].offsetLeft - track.offsetLeft - left)) best = i;
+      });
+      return best;
+    };
+
+    const goTo = (i: number) => {
+      const target = slides[Math.max(0, Math.min(slides.length - 1, i))];
+      track.scrollTo({ left: target.offsetLeft - track.offsetLeft, behavior });
+    };
+
+    const update = () => {
+      const atStart = track.scrollLeft <= 2;
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+      // В конце ленты видно несколько последних слайдов — подсвечиваем последнюю точку
+      const i = atEnd && !atStart ? slides.length - 1 : current();
+      if (prev) prev.disabled = atStart;
+      if (next) next.disabled = atEnd;
+      dots.forEach((d, n) => d.setAttribute('aria-current', String(n === i)));
+      // Все слайды помещаются — навигация не нужна
+      section.classList.toggle('t--static', atStart && atEnd);
+    };
+
+    prev?.addEventListener('click', () => goTo(current() - 1));
+    next?.addEventListener('click', () => goTo(current() + 1));
+    dots.forEach((d, n) => d.addEventListener('click', () => goTo(n)));
+
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current() + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current() - 1); }
+    });
+
+    // Расчёт дешёвый (несколько слайдов), поэтому обновляем прямо в обработчике —
+    // без requestAnimationFrame, который не срабатывает в фоновых вкладках.
+    track.addEventListener('scroll', update, { passive: true });
+    track.addEventListener('scrollend', update);
+    window.addEventListener('resize', update);
+    update();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(initCarousel);
+</script>
+
+<style>
+  .t-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .t-nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .t-btn {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .t-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .t-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .t-demo-note {
+    margin-top: 20px;
+    padding: 10px 14px;
+    border: 1px dashed var(--t-warm);
+    border-radius: var(--radius-m);
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  .t-carousel {
+    margin-top: clamp(32px, 4vw, 48px);
+  }
+
+  .t-track {
+    --gap: 20px;
+    --per-view: 3;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - var(--gap) * (var(--per-view) - 1)) / var(--per-view));
+    gap: var(--gap);
+    margin: 0;
+    padding: 0 0 4px;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .t-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .t-track:focus-visible {
+    outline-offset: 6px;
+    border-radius: var(--radius-l);
+  }
+
+  .t-slide {
+    scroll-snap-align: start;
+    display: flex;
+  }
+
+  .t-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  /* Тонкая полоса тепловой шкалы сверху карточки — визуальный язык ADR-0004 */
+  .t-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 28px auto;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--t-cold), var(--t-mild), var(--t-hot));
+  }
+
+  .t-quote-mark {
+    width: 32px;
+    height: 24px;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .t-card blockquote {
+    flex: 1;
+    margin: 18px 0 24px;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .t-card figcaption {
+    display: grid;
+    gap: 2px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 15px;
+  }
+
+  .t-author {
+    font-weight: 600;
+  }
+
+  .t-meta {
+    color: var(--ink-muted);
+  }
+
+  .t-project {
+    margin-top: 8px;
+    justify-self: start;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .t-demo-badge {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    padding: 2px 8px;
+    border-radius: var(--radius-s);
+    background: var(--t-warm);
+    color: #14202b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .t-dots {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 24px;
+  }
+
+  .t-dot {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .t-dot::before {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    margin: auto;
+    border-radius: 999px;
+    background: var(--line);
+    transition: width 0.2s, background 0.2s;
+  }
+
+  .t-dot[aria-current='true']::before {
+    width: 22px;
+    background: var(--accent);
+  }
+
+  /* Все отзывы помещаются на экран — прячем навигацию */
+  :global(.t--static) .t-nav,
+  :global(.t--static) .t-dots {
+    display: none;
+  }
+
+  @media (max-width: 1040px) {
+    .t-track {
+      --per-view: 2;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .t-track {
+      --per-view: 1.08;
+      --gap: 12px;
+    }
+
+    .t-card {
+      padding: 22px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .t-dot::before {
+      transition: none;
+    }
+  }
+</style>
