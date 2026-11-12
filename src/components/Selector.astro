@@ -1,0 +1,918 @@
+---
+// Виджет подбора оборудования: упрощённый тепловой расчёт шкафа и подбор серий из каталога.
+// Методика — оценочная (теплообмен через стенки по IEC/TR 60890), не заменяет расчёт инженера.
+import { url } from '../lib/url';
+
+const sizes = [
+  { label: 'Бокс 400×400×200', w: 400, h: 400, d: 200 },
+  { label: 'Настенный 600×800×250', w: 600, h: 800, d: 250 },
+  { label: 'Напольный 800×2000×600', w: 800, h: 2000, d: 600 },
+  { label: 'Стойка 19″ 600×2000×1000', w: 600, h: 2000, d: 1000 },
+];
+
+const loads = [
+  { label: 'Реле и ПЛК', value: 80 },
+  { label: 'Частотник 7,5 кВт', value: 250 },
+  { label: 'Шкаф АСУ ТП', value: 600 },
+  { label: 'Серверная стойка', value: 2500 },
+];
+
+// Диапазон шкалы — тот же, что SCALE в скрипте
+const SCALE_MIN = -50;
+const SCALE_MAX = 60;
+const ticks = [-40, -20, 0, 20, 40, 60];
+---
+
+<section id="selector" class="block">
+  <div class="container">
+    <h2>Подбор оборудования</h2>
+    <p class="block__lead">
+      Опишите шкаф и условия на объекте — посчитаем, сколько тепла нужно отвести летом и подвести
+      зимой, и предложим модели из каталога.
+    </p>
+
+    <div class="sel" data-selector>
+      <form class="sel__form" data-form autocomplete="off">
+        <fieldset class="sel__group">
+          <legend>Где стоит шкаф</legend>
+          <div class="seg">
+            <label><input type="radio" name="place" value="indoor" checked /><span>В помещении</span></label>
+            <label><input type="radio" name="place" value="outdoor" /><span>На улице</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="sel__group">
+          <legend>Температура снаружи шкафа</legend>
+          <label class="range">
+            <span class="range__head">Летом до <output data-out="summer">+30 °C</output></span>
+            <input type="range" name="summer" min="20" max="55" step="1" value="30" />
+          </label>
+          <label class="range">
+            <span class="range__head">Зимой до <output data-out="winter">+10 °C</output></span>
+            <input type="range" name="winter" min="-50" max="25" step="1" value="10" />
+          </label>
+        </fieldset>
+
+        <fieldset class="sel__group">
+          <legend>Тепловыделение оборудования в шкафу</legend>
+          <label class="range">
+            <span class="range__head">Потери мощности <output data-out="load">300 Вт</output></span>
+            <input type="range" name="load" min="0" max="100" step="1" value="50" data-log />
+          </label>
+          <div class="chips" role="group" aria-label="Типовые значения">
+            {loads.map((l) => (
+              <button type="button" class="chip" data-load={l.value}>{l.label} · {l.value} Вт</button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="sel__group">
+          <legend>Размер шкафа, мм</legend>
+          <div class="dims">
+            <label><span>Ширина</span><input type="number" name="w" min="150" max="2400" step="10" value="600" inputmode="numeric" /></label>
+            <label><span>Высота</span><input type="number" name="h" min="150" max="2400" step="10" value="800" inputmode="numeric" /></label>
+            <label><span>Глубина</span><input type="number" name="d" min="100" max="1200" step="10" value="250" inputmode="numeric" /></label>
+          </div>
+          <div class="chips" role="group" aria-label="Типовые размеры">
+            {sizes.map((s) => (
+              <button type="button" class="chip" data-w={s.w} data-h={s.h} data-d={s.d}>{s.label}</button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="sel__group">
+          <legend>Питание климатического оборудования</legend>
+          <div class="seg seg--3">
+            <label><input type="radio" name="supply" value="ac" checked /><span>~230 В</span></label>
+            <label><input type="radio" name="supply" value="dc24" /><span>=24 В</span></label>
+            <label><input type="radio" name="supply" value="dc48" /><span>=48 В</span></label>
+          </div>
+        </fieldset>
+
+        <label class="check">
+          <input type="checkbox" name="sealed" />
+          <span>
+            Пыль, влага или масляный туман: шкаф должен оставаться закрытым
+            <small>Тогда вентиляция наружным воздухом не подходит</small>
+          </span>
+        </label>
+      </form>
+
+      <div class="sel__result" aria-live="polite">
+        <div class="scale" aria-hidden="true">
+          <div class="scale__band" data-band><span>Внутри шкафа +5…+35 °C</span></div>
+          <div class="scale__track">
+            <div class="scale__bar"></div>
+            <div class="scale__gap scale__gap--heat" data-gap="heat"></div>
+            <div class="scale__gap scale__gap--cool" data-gap="cool"></div>
+          </div>
+          <div class="scale__pins">
+            <span class="pin pin--winter" data-pin="winter"><i></i><b data-pin-label="winter"></b></span>
+            <span class="pin pin--summer" data-pin="summer"><i></i><b data-pin-label="summer"></b></span>
+          </div>
+          <div class="scale__ticks">
+            {ticks.map((t) => (
+              <span style={`left: ${((t - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)) * 100}%`}>
+                {t > 0 ? '+' : t < 0 ? '−' : ''}{Math.abs(t)}{t === SCALE_MAX ? ' °C' : ''}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <dl class="stats">
+          <div class="stat stat--cool">
+            <dt>Отвести летом</dt>
+            <dd data-stat="cool">—</dd>
+          </div>
+          <div class="stat stat--heat">
+            <dt>Подвести зимой</dt>
+            <dd data-stat="heat">—</dd>
+          </div>
+          <div class="stat">
+            <dt>Площадь теплообмена</dt>
+            <dd data-stat="area">—</dd>
+          </div>
+        </dl>
+
+        <p class="sel__verdict" data-verdict></p>
+
+        <ul class="picks" data-picks></ul>
+
+        <p class="sel__note">
+          Оценка по площади стенок шкафа (IEC/TR 60890, окрашенная сталь, k = 5,5 Вт/м²·К), внутри
+          держим +5…+35 °C, зимой считаем холодный пуск без тепла от оборудования. Для проекта
+          инженеры Silart сделают точный расчёт —
+          <a href={url('/#contact')}>отправьте заявку</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sel {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: start;
+    margin-top: clamp(40px, 5vw, 64px);
+  }
+
+  .sel__form {
+    display: grid;
+    gap: 28px;
+  }
+
+  .sel__group {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .sel__group legend {
+    margin-bottom: 12px;
+    padding: 0;
+    font-weight: 500;
+  }
+
+  /* Сегментированный переключатель */
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  .seg--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .seg label {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .seg input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .seg span {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 15px;
+    color: var(--ink-muted);
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .seg input:checked + span {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .seg input:focus-visible + span {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .range {
+    display: grid;
+    gap: 6px;
+  }
+
+  .range__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--ink-muted);
+  }
+
+  .range output {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .range input {
+    width: 100%;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .chip:hover {
+    border-color: var(--ink-muted);
+    color: var(--ink);
+  }
+
+  .chip[aria-pressed='true'] {
+    border-color: var(--accent);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .dims {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dims label {
+    display: grid;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .dims input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+  }
+
+  .check {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .check input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--accent);
+  }
+
+  .check small {
+    display: block;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  /* ---------- Результат ---------- */
+
+  .sel__result {
+    position: sticky;
+    top: calc(var(--header-h) + 16px);
+    display: grid;
+    gap: 24px;
+    padding: clamp(20px, 3vw, 32px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .scale {
+    position: relative;
+    padding-top: 30px;
+  }
+
+  .scale__band {
+    position: absolute;
+    top: 0;
+    height: 22px;
+    border: 1px solid var(--ink-muted);
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .scale__band span {
+    position: absolute;
+    left: 50%;
+    top: -4px;
+    padding: 0 6px;
+    transform: translateX(-50%);
+    background: var(--surface);
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--ink-muted);
+  }
+
+  .scale__track {
+    position: relative;
+    height: 12px;
+  }
+
+  /* Положение стопов — та же тепловая шкала, что в ThermalDemo, на диапазоне −50…+60 °C */
+  .scale__bar {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: linear-gradient(
+      90deg,
+      var(--t-frost) 18%,
+      var(--t-cold) 36%,
+      var(--t-cool) 53%,
+      var(--t-mild) 65%,
+      var(--t-warm) 78%,
+      var(--t-hot) 91%,
+      var(--t-burn) 100%
+    );
+    opacity: 0.35;
+  }
+
+  .scale__gap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 6px;
+    transition:
+      left 0.35s,
+      width 0.35s;
+  }
+
+  .scale__gap--heat {
+    background: repeating-linear-gradient(-45deg, var(--t-hot) 0 4px, color-mix(in srgb, var(--t-hot) 55%, transparent) 4px 8px);
+  }
+
+  .scale__gap--cool {
+    background: repeating-linear-gradient(-45deg, var(--t-cold) 0 4px, color-mix(in srgb, var(--t-cold) 55%, transparent) 4px 8px);
+  }
+
+  .scale__pins {
+    position: relative;
+    height: 30px;
+  }
+
+  .pin {
+    position: absolute;
+    top: 0;
+    display: grid;
+    justify-items: center;
+    transform: translateX(-50%);
+    transition: left 0.35s;
+  }
+
+  .pin i {
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-bottom: 8px solid currentColor;
+    border-top: 0;
+  }
+
+  .pin b {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .pin--winter {
+    color: var(--t-cold);
+  }
+
+  .pin--summer {
+    color: var(--t-hot);
+  }
+
+  .scale__ticks {
+    position: relative;
+    height: 16px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+
+  .scale__ticks span {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .scale__ticks span:last-child {
+    transform: translateX(-100%);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+  }
+
+  .stat dt {
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  .stat dd {
+    margin: 4px 0 0;
+    font-size: clamp(24px, 2.6vw, 34px);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .stat--cool dd {
+    color: color-mix(in srgb, var(--t-cold) 70%, var(--ink));
+  }
+
+  .stat--heat dd {
+    color: color-mix(in srgb, var(--t-hot) 75%, var(--ink));
+  }
+
+  .sel__verdict {
+    font-size: 17px;
+  }
+
+  .picks {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sel__note {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+
+  .sel__note a {
+    color: var(--accent);
+  }
+
+  @media (max-width: 960px) {
+    .sel {
+      grid-template-columns: 1fr;
+    }
+
+    .sel__result {
+      position: static;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .stats .stat:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pin,
+    .scale__gap {
+      transition: none;
+    }
+  }
+</style>
+
+<!-- Карточки рекомендаций рендерятся скриптом, поэтому их стили глобальные в пределах виджета -->
+<style is:global>
+  [data-picks] .pick {
+    --tone: var(--t-neutral);
+
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 4px 14px;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--tone);
+    border-radius: var(--radius-m);
+    background: color-mix(in srgb, var(--tone) 5%, var(--surface));
+  }
+
+  [data-picks] .pick--cool {
+    --tone: var(--t-cold);
+  }
+
+  [data-picks] .pick--air {
+    --tone: var(--t-cool);
+  }
+
+  [data-picks] .pick--heat {
+    --tone: var(--t-hot);
+  }
+
+  [data-picks] .pick__role {
+    grid-row: span 2;
+    width: 9.5ch;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  [data-picks] .pick__model {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  [data-picks] .pick__model small {
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink-muted);
+  }
+
+  [data-picks] .pick__why {
+    grid-column: 2;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  [data-picks] .pick__link {
+    grid-row: 1 / span 2;
+    grid-column: 3;
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  [data-picks] .pick__link:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 560px) {
+    [data-picks] .pick {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    [data-picks] .pick__role,
+    [data-picks] .pick__why,
+    [data-picks] .pick__link {
+      grid-row: auto;
+      grid-column: auto;
+    }
+  }
+</style>
+
+<script>
+  import { seriesByCode, pdfPage, type Model, type Series, type Supply } from '../data/products';
+
+  const T_IN_MAX = 35;
+  const T_IN_MIN = 5;
+  const K = 5.5; // Вт/(м²·К), окрашенная листовая сталь
+  const AIR = 3.1; // м³·К/(Вт·ч) — теплоёмкость воздуха на уровне моря
+  const SCALE: [number, number] = [-50, 60];
+  const LOAD_MAX = 4000;
+
+  // Встроенный нагреватель OTS (каталог, стр. 61)
+  const OTS_HEATER: Record<string, number> = { 'OTS-0500-000': 250, 'OTS-1000-000': 250, 'OTS-2000-000': 460 };
+
+  const nf = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+  const nf1 = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+  const deg = (t: number) => `${t > 0 ? '+' : t < 0 ? '−' : ''}${Math.abs(t)} °C`;
+  const watts = (w: number) => `${nf.format(Math.round(w / 10) * 10)} Вт`;
+
+  // Ползунок нагрузки — логарифмический: 0…100 → 0…4000 Вт, мелкие значения точнее
+  const loadFromSlider = (v: number) => (v === 0 ? 0 : Math.round((10 ** (1 + (v / 100) * Math.log10(LOAD_MAX / 10))) / 10) * 10);
+  const sliderFromLoad = (w: number) => (w <= 10 ? 0 : Math.round((Math.log10(w / 10) / Math.log10(LOAD_MAX / 10)) * 100));
+
+  interface Pick {
+    role: string;
+    tone: 'cool' | 'air' | 'heat' | 'ctrl';
+    model: string;
+    count?: number;
+    series: Series;
+    why: string;
+  }
+
+  /** Самая маленькая подходящая модель или несколько самых больших, если одной не хватает */
+  function choose(models: Model[], need: number, maxUnits = 3): { model: Model; count: number } | null {
+    const sorted = models.filter((m) => m.value).sort((a, b) => a.value! - b.value!);
+    if (!sorted.length) return null;
+    const one = sorted.find((m) => m.value! >= need);
+    if (one) return { model: one, count: 1 };
+    const big = sorted[sorted.length - 1];
+    const count = Math.ceil(need / big.value!);
+    return count <= maxUnits ? { model: big, count } : null;
+  }
+
+  const bySupply = (s: Series, supply: Supply) => s.models.filter((m) => !m.supply || m.supply.includes(supply));
+
+  function pickConditioner(need: number, ambient: number, outdoor: boolean, supply: Supply): Pick | null {
+    // Мощность кондиционера указана при +35 °C снаружи; в жару она падает (до ~⅔ при +50 °C)
+    const derate = 1 - 0.3 * Math.min(1, Math.max(0, (ambient - 35) / 15));
+    const rated = (need * 1.1) / derate;
+    const order =
+      supply === 'ac' ? (outdoor ? ['OTS', 'OTU'] : ['NTS', 'NDU']) : outdoor ? ['STA'] : ['STA-A', 'STA'];
+    for (const code of order) {
+      const s = seriesByCode(code);
+      const hit = choose(bySupply(s, supply), rated, code === order[order.length - 1] ? 3 : 1);
+      if (hit) {
+        return {
+          role: 'Охлаждение',
+          tone: 'cool',
+          model: hit.model.code,
+          count: hit.count,
+          series: s,
+          why: `${hit.count > 1 ? `${hit.count} × ` : ''}${watts(hit.model.value!)} при +35 °C снаружи${derate < 1 ? ', с поправкой на жару' : ''}${s.kind === 'ac' && supply !== 'ac' ? '; Пельтье — без фреона' : ''}`,
+        };
+      }
+    }
+    return null;
+  }
+
+  function pickFan(need: number, dT: number, supply: Supply, outdoor: boolean): Pick[] | null {
+    const flow = (AIR * need) / dT;
+    const s = seriesByCode('NLV');
+    // Основной ряд — IP54 (последняя цифра кода 0)
+    const hit = choose(bySupply(s, supply).filter((m) => m.code.endsWith('0')), flow * 1.15, 2);
+    if (!hit) return null;
+    const size = hit.model.code.slice(4, 6);
+    const filter = `NLF-${{ '10': '100', '11': '100', '15': '150', '20': '200', '25': '250', '26': '250', '30': '300', '31': '300' }[size]}`;
+    const picks: Pick[] = [
+      {
+        role: 'Вентиляция',
+        tone: 'air',
+        model: hit.model.code,
+        count: hit.count,
+        series: s,
+        why: `нужно ≈ ${nf.format(Math.ceil(flow))} м³/ч, у модели ${nf.format(hit.model.value!)} м³/ч; выпуск — фильтр ${filter}`,
+      },
+    ];
+    if (outdoor)
+      picks.push({
+        role: 'Защита',
+        tone: 'ctrl',
+        model: 'KFV',
+        series: seriesByCode('KFV'),
+        why: 'кожухи от дождя и снега на вентилятор и выходной фильтр',
+      });
+    return picks;
+  }
+
+  function pickHeater(need: number, supply: Supply): Pick | null {
+    const ordered = supply === 'ac' ? ['SNK-B', 'SNV', 'SNV-S'] : ['SNK-T', 'SNK-B', 'SNV'];
+    const all = ordered.flatMap((code) => bySupply(seriesByCode(code), supply).map((m) => ({ m, code })));
+    const sorted = all.sort((a, b) => a.m.value! - b.m.value!);
+    const target = need * 1.1;
+    let hit = sorted.find(({ m }) => m.value! >= target);
+    let count = 1;
+    if (!hit) {
+      hit = sorted[sorted.length - 1];
+      count = Math.ceil(target / hit.m.value!);
+    }
+    const s = seriesByCode(hit.code);
+    return {
+      role: 'Обогрев',
+      tone: 'heat',
+      model: hit.m.code,
+      count,
+      series: s,
+      why: `${count > 1 ? `${count} × ` : ''}${watts(hit.m.value!)}${s.code.startsWith('SNK') ? ', бесшумный конвекционный' : ', с вентилятором — тепло распределяется равномерно'}`,
+    };
+  }
+
+  function renderPick(p: Pick): string {
+    const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&${{ '&': 'amp', '<': 'lt', '>': 'gt', '"': 'quot' }[c]};`);
+    const count = p.count && p.count > 1 ? `${p.count} × ` : '';
+    return `<li class="pick pick--${p.tone}">
+      <span class="pick__role">${esc(p.role)}</span>
+      <span class="pick__model">${count}${esc(p.model)}<small>${esc(p.series.title)}</small></span>
+      <span class="pick__why">${esc(p.why)}</span>
+      <a class="pick__link" href="${pdfPage(p.series.page)}" target="_blank" rel="noopener">Стр. ${p.series.page} ↗</a>
+    </li>`;
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-selector]')) {
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const $ = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement;
+    const pos = (t: number) => `${((Math.min(SCALE[1], Math.max(SCALE[0], t)) - SCALE[0]) / (SCALE[1] - SCALE[0])) * 100}%`;
+
+    const band = $<HTMLElement>('[data-band]');
+    band.style.left = pos(T_IN_MIN);
+    band.style.width = `calc(${pos(T_IN_MAX)} - ${pos(T_IN_MIN)})`;
+
+    function update() {
+      const data = new FormData(form);
+      const outdoor = data.get('place') === 'outdoor';
+      const supply = data.get('supply') as Supply;
+      const sealed = data.get('sealed') === 'on';
+      const summer = Number(data.get('summer'));
+      const winter = Number(data.get('winter'));
+      const load = loadFromSlider(Number(data.get('load')));
+      const [w, h, d] = ['w', 'h', 'd'].map((n) => Math.max(100, Number(data.get(n)) || 0) / 1000);
+
+      // IEC/TR 60890: отдельно стоящий шкаф, открыты все стороны кроме пола
+      const area = 1.8 * h * (w + d) + 1.4 * w * d;
+      const passive = K * area * (T_IN_MAX - summer); // > 0 — стенки сами отдают тепло наружу
+      const cool = Math.max(0, load - passive);
+      const heat = Math.max(0, K * area * (T_IN_MIN - winter));
+
+      // Шкала
+      $('[data-out="summer"]').textContent = deg(summer);
+      $('[data-out="winter"]').textContent = deg(winter);
+      $('[data-out="load"]').textContent = `${nf.format(load)} Вт`;
+      for (const [k, t] of [['winter', winter], ['summer', summer]] as const) {
+        $<HTMLElement>(`[data-pin="${k}"]`).style.left = pos(t);
+        $(`[data-pin-label="${k}"]`).textContent = deg(t);
+      }
+      const gapHeat = $<HTMLElement>('[data-gap="heat"]');
+      gapHeat.style.left = pos(winter);
+      gapHeat.style.width = heat > 0 ? `calc(${pos(T_IN_MIN)} - ${pos(winter)})` : '0';
+      const gapCool = $<HTMLElement>('[data-gap="cool"]');
+      gapCool.style.left = pos(T_IN_MAX);
+      gapCool.style.width = summer > T_IN_MAX ? `calc(${pos(summer)} - ${pos(T_IN_MAX)})` : '0';
+
+      $('[data-stat="cool"]').textContent = cool > 0 ? watts(cool) : '0 Вт';
+      $('[data-stat="heat"]').textContent = heat > 0 ? watts(heat) : '0 Вт';
+      $('[data-stat="area"]').textContent = `${nf1.format(area)} м²`;
+
+      // Подбор
+      const picks: Pick[] = [];
+      let verdict = '';
+      const dT = T_IN_MAX - summer;
+
+      if (cool > 0) {
+        const fan = !sealed && dT >= 5 ? pickFan(cool, dT, supply, outdoor) : null;
+        const ac = pickConditioner(cool, summer, outdoor, supply);
+        if (fan) {
+          picks.push(...fan);
+          verdict = `Снаружи прохладнее, чем нужно внутри, — хватит вентиляции с фильтром.${ac ? ' Если шкаф нельзя открывать для наружного воздуха, ниже альтернатива — кондиционер.' : ''}`;
+          if (ac) picks.push({ ...ac, role: 'Или' });
+        } else if (ac) {
+          picks.push(ac);
+          verdict =
+            dT < 5
+              ? 'Снаружи слишком жарко для вентиляции: воздух не охладит шкаф ниже +35 °C — нужен кондиционер.'
+              : 'Шкаф закрыт от наружного воздуха — тепло отводит кондиционер по замкнутому контуру.';
+        } else {
+          verdict =
+            'Тепловая нагрузка больше стандартного ряда для выбранного питания — подберём несколько аппаратов или решение под заказ (опросный лист — стр. 96 каталога).';
+        }
+      } else {
+        verdict = `Стенки шкафа сами рассеют ${watts(load)} при ${deg(summer)} снаружи — активное охлаждение не нужно.`;
+      }
+
+      // Встроенный обогрев учитываем, только если кондиционер — основное решение, а не альтернатива
+      const ac = picks.find((p) => p.role === 'Охлаждение');
+      const otsHeater = ac && OTS_HEATER[ac.model];
+      if (heat > 0) {
+        if (otsHeater && otsHeater >= heat * 1.1) {
+          verdict += ` Зимой хватит встроенного нагревателя ${ac!.model} (${otsHeater} Вт).`;
+        } else {
+          const heater = pickHeater(heat, supply);
+          if (heater) {
+            if (otsHeater) heater.why += `; встроенного обогрева ${ac!.model} (${otsHeater} Вт) не хватит`;
+            picks.push(heater);
+          }
+        }
+      }
+
+      // Управление: кондиционеры со своим контроллером, остальным нужен термостат
+      const hasFan = picks.some((p) => p.tone === 'air');
+      const hasHeater = picks.some((p) => p.tone === 'heat');
+      if (hasFan || hasHeater) {
+        const both = hasFan && hasHeater;
+        picks.push({
+          role: 'Управление',
+          tone: 'ctrl',
+          model: both ? 'TBS-140 + TBS-260' : hasHeater ? 'TBS-140' : 'TBS-260',
+          series: seriesByCode('TBS'),
+          why: both
+            ? 'по термостату на нагрев и на вентиляцию; или один ECD-1000 с дисплеем'
+            : hasHeater
+              ? 'включает нагрев, когда в шкафу холодает'
+              : 'включает вентилятор, когда в шкафу жарко',
+        });
+      }
+      if (outdoor && hasHeater) {
+        picks.push({
+          role: 'Влажность',
+          tone: 'ctrl',
+          model: 'MTN-410',
+          series: seriesByCode('MTN'),
+          why: 'гигростат включит нагрев до появления конденсата',
+        });
+      }
+
+      $('[data-verdict]').textContent = verdict;
+      $('[data-picks]').innerHTML = picks.map(renderPick).join('');
+    }
+
+    // Пресеты
+    for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-load]')) {
+      btn.addEventListener('click', () => {
+        field('load').value = String(sliderFromLoad(Number(btn.dataset.load)));
+        update();
+        syncChips();
+      });
+    }
+    for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-w]')) {
+      btn.addEventListener('click', () => {
+        for (const k of ['w', 'h', 'd'] as const) field(k).value = btn.dataset[k]!;
+        update();
+        syncChips();
+      });
+    }
+
+    function syncChips() {
+      const load = loadFromSlider(Number(field('load').value));
+      for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-load]')) {
+        btn.setAttribute('aria-pressed', String(Math.abs(Number(btn.dataset.load) - load) <= Number(btn.dataset.load) * 0.05));
+      }
+      for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-w]')) {
+        const same = (['w', 'h', 'd'] as const).every((k) => field(k).value === btn.dataset[k]);
+        btn.setAttribute('aria-pressed', String(same));
+      }
+    }
+
+    // Смена места: подставляем типовой климат, если пользователь его ещё не трогал
+    let climateTouched = false;
+    for (const name of ['summer', 'winter']) field(name).addEventListener('input', () => (climateTouched = true));
+    for (const radio of form.querySelectorAll<HTMLInputElement>('input[name="place"]')) {
+      radio.addEventListener('change', () => {
+        if (climateTouched) return;
+        const outdoor = radio.value === 'outdoor';
+        field('summer').value = outdoor ? '40' : '30';
+        field('winter').value = outdoor ? '-35' : '10';
+      });
+    }
+
+    form.addEventListener('input', () => {
+      update();
+      syncChips();
+    });
+    form.addEventListener('change', () => {
+      update();
+      syncChips();
+    });
+    form.addEventListener('submit', (e) => e.preventDefault());
+
+    field('load').value = String(sliderFromLoad(300));
+    update();
+    syncChips();
+  }
+</script>

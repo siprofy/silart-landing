@@ -4,7 +4,8 @@ import ThemeToggle from './ThemeToggle.astro';
 import { mainNav } from '../data/site';
 import { url } from '../lib/url';
 
-const contactHref = url('/#contact');
+const selectorHref = url('/#selector');
+const searchHref = url('/search/');
 ---
 
 <header class="header">
@@ -20,8 +21,14 @@ const contactHref = url('/#contact');
     </nav>
 
     <div class="header__tools">
+      <a href={searchHref} class="header__icon" aria-label="Поиск по каталогу" title="Поиск">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m16 16 4.5 4.5" />
+        </svg>
+      </a>
       <ThemeToggle />
-      <a href={contactHref} class="btn btn--primary header__cta">Подобрать оборудование</a>
+      <a href={selectorHref} class="btn btn--primary header__cta">Подобрать оборудование</a>
 
       <details class="header__mobile">
         <summary aria-label="Меню">
@@ -33,7 +40,7 @@ const contactHref = url('/#contact');
               <li><a href={link.href}>{link.title}</a></li>
             ))}
           </ul>
-          <a href={contactHref} class="btn btn--primary">Подобрать оборудование</a>
+          <a href={selectorHref} class="btn btn--primary">Подобрать оборудование</a>
         </nav>
       </details>
     </div>
@@ -80,6 +87,21 @@ const contactHref = url('/#contact');
     align-items: center;
     gap: 10px;
     margin-left: auto;
+  }
+
+  /* Иконка-ссылка того же размера, что и переключатель темы */
+  .header__icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    color: var(--ink);
+  }
+
+  .header__icon:hover {
+    border-color: var(--ink-muted);
   }
 
   .header__cta {

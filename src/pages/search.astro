@@ -1,0 +1,574 @@
+---
+// Поиск по каталогу и страницам сайта. Индекс собирается при сборке и встраивается в страницу,
+// сам поиск — в браузере, без внешних сервисов.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { series, catalogPdf, pdfPage } from '../data/products';
+import { catalog } from '../data/catalog';
+import { support, company } from '../data/site';
+import { url } from '../lib/url';
+import type { SearchItem } from '../lib/search';
+
+const categoryTitle = Object.fromEntries(catalog.map((c) => [c.slug, c.title]));
+const categoryTone = Object.fromEntries(catalog.map((c) => [c.slug, c.tone]));
+
+// Только страницы, которые реально существуют, — чтобы поиск не вёл на 404
+const existing = new Set(
+  Object.keys(import.meta.glob('./**/*.astro')).map((p) =>
+    p.replace(/^\./, '').replace(/(index)?\.astro$/, '').replace(/([^/])$/, '$1/'),
+  ),
+);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const pageExists = (href: string) => existing.has(href.slice(base.length).split('#')[0]);
+
+const items: SearchItem[] = [
+  ...series.map((s) => ({
+    kind: 'series' as const,
+    title: s.title,
+    code: s.code,
+    label: categoryTitle[s.category],
+    tone: categoryTone[s.category],
+    text: s.summary,
+    specs: s.specs,
+    models: s.models.map((m) => m.code),
+    href: pdfPage(s.page),
+    linkText: `Каталог, стр. ${s.page}`,
+    keywords: s.keywords,
+  })),
+  {
+    kind: 'page',
+    title: 'Подбор оборудования',
+    label: 'Инструмент',
+    tone: 'neutral',
+    text: 'Расчёт тепловой нагрузки шкафа и подбор кондиционера, вентилятора и нагревателя по условиям на объекте.',
+    specs: [],
+    models: [],
+    href: url('/#selector'),
+    linkText: 'Открыть',
+    keywords: 'подбор расчет калькулятор тепловая нагрузка конфигуратор',
+  },
+  {
+    kind: 'page',
+    title: catalogPdf.title,
+    label: 'PDF',
+    tone: 'neutral',
+    text: 'Полный каталог с таблицами характеристик, чертежами и опросными листами для заказа.',
+    specs: [],
+    models: [],
+    href: catalogPdf.href,
+    linkText: 'Скачать',
+    keywords: 'каталог pdf скачать опросный лист прайс',
+  },
+  ...[...support, ...company]
+    .filter((l) => pageExists(l.href))
+    .map((l) => ({
+      kind: 'page' as const,
+      title: l.title,
+      label: support.includes(l) ? 'Поддержка' : 'Компания',
+      tone: 'neutral',
+      text: l.description ?? '',
+      specs: [],
+      models: [],
+      href: l.href,
+      linkText: 'Перейти',
+      keywords: '',
+    })),
+];
+
+const suggestions = ['уличный кондиционер', 'Пельтье', 'нагреватель', 'термостат', 'IP65', 'SNV-640', 'крышный вентилятор', '24 В'];
+---
+
+<BaseLayout
+  title="Поиск по каталогу — Silart"
+  description="Поиск по сериям и моделям климатического оборудования Silart: кондиционеры, вентиляторы, нагреватели, термостаты и аксессуары."
+>
+  <PageHeader
+    title="Поиск"
+    lead="Ищите по названию, серии или артикулу модели — например, «уличный кондиционер», «STA» или «NLV-2520»."
+  >
+    <form class="search" role="search" action={url('/search/')} method="get" data-search-form>
+      <label class="visually-hidden" for="q">Что ищем</label>
+      <svg class="search__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.5" />
+        <path d="m16 16 4.5 4.5" />
+      </svg>
+      <input id="q" name="q" type="search" autocomplete="off" spellcheck="false" placeholder="Серия, модель или задача" autofocus />
+      <button class="btn btn--primary" type="submit">Найти</button>
+    </form>
+
+    <div class="suggest" data-suggest>
+      <span>Например:</span>
+      {suggestions.map((s) => <button type="button" class="chip" data-q={s}>{s}</button>)}
+    </div>
+  </PageHeader>
+
+  <section class="block block--first">
+    <div class="container">
+      <p class="status" data-status aria-live="polite"></p>
+      <ol class="results" data-results></ol>
+
+      <noscript>
+        <p class="status">Для поиска включите JavaScript. Весь ассортимент — в каталоге ниже.</p>
+      </noscript>
+
+      <div class="browse" data-browse>
+        <h2>Весь ассортимент</h2>
+        <div class="browse__grid">
+          {catalog.map((c) => (
+            <section class:list={['browse__cat', `browse__cat--${c.tone}`]}>
+              <h3>{c.title}</h3>
+              <ul>
+                {series
+                  .filter((s) => s.category === c.slug)
+                  .map((s) => (
+                    <li>
+                      <a href={pdfPage(s.page)} target="_blank" rel="noopener">
+                        <b>{s.code}</b> {s.title.replace(new RegExp(`\\s*${s.code}$`), '')}
+                      </a>
+                      <span>{s.specs[0]}</span>
+                    </li>
+                  ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/json" id="search-index" set:html={JSON.stringify(items)} />
+</BaseLayout>
+
+<style>
+  .search {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    max-width: 720px;
+    margin-top: clamp(24px, 3vw, 36px);
+  }
+
+  .search__icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-muted);
+    pointer-events: none;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    min-height: 56px;
+    padding: 0 16px 0 50px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 18px;
+  }
+
+  .search input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  .search .btn {
+    min-height: 56px;
+  }
+
+  .suggest {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+
+  .suggest span {
+    margin-right: 4px;
+  }
+
+  .chip {
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .chip:hover {
+    border-color: var(--ink-muted);
+    color: var(--ink);
+  }
+
+  .status {
+    color: var(--ink-muted);
+  }
+
+  .status:empty {
+    display: none;
+  }
+
+  .results {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .results:empty {
+    display: none;
+  }
+
+  .browse h2 {
+    font-size: clamp(24px, 2.6vw, 32px);
+  }
+
+  .browse__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 20px 32px;
+    margin-top: 24px;
+  }
+
+  .browse__cat {
+    --tone: var(--t-neutral);
+
+    padding-top: 14px;
+    border-top: 3px solid var(--tone);
+  }
+
+  .browse__cat--cold {
+    --tone: var(--t-cold);
+  }
+
+  .browse__cat--air {
+    --tone: var(--t-cool);
+  }
+
+  .browse__cat--hot {
+    --tone: var(--t-hot);
+  }
+
+  .browse__cat h3 {
+    margin-bottom: 10px;
+  }
+
+  .browse__cat ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .browse__cat li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 7px;
+    border-bottom: 1px dashed var(--line);
+    font-size: 15px;
+  }
+
+  .browse__cat a {
+    text-decoration: none;
+  }
+
+  .browse__cat a:hover {
+    color: var(--accent);
+  }
+
+  .browse__cat li span {
+    flex: none;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+
+  @media (max-width: 560px) {
+    .search .btn {
+      display: none;
+    }
+  }
+</style>
+
+<!-- Результаты рендерятся скриптом -->
+<style is:global>
+  [data-results] .hit {
+    --tone: var(--t-neutral);
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 24px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--tone);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  [data-results] .hit--cold {
+    --tone: var(--t-cold);
+  }
+
+  [data-results] .hit--air {
+    --tone: var(--t-cool);
+  }
+
+  [data-results] .hit--hot {
+    --tone: var(--t-hot);
+  }
+
+  [data-results] .hit__label {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  [data-results] .hit__title {
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  [data-results] .hit__title a {
+    text-decoration: none;
+  }
+
+  [data-results] .hit__title a:hover {
+    color: var(--accent);
+  }
+
+  [data-results] .hit__text {
+    color: var(--ink-muted);
+    font-size: 15px;
+  }
+
+  [data-results] .hit__specs,
+  [data-results] .hit__models {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+  }
+
+  [data-results] .hit__specs li {
+    color: var(--ink-muted);
+  }
+
+  [data-results] .hit__specs li + li::before {
+    content: '·';
+    margin-right: 6px;
+  }
+
+  [data-results] .hit__models li {
+    padding: 2px 8px;
+    border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--line));
+    border-radius: var(--radius-s);
+    background: color-mix(in srgb, var(--tone) 8%, transparent);
+  }
+
+  [data-results] .hit__models li.is-match {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    font-weight: 500;
+  }
+
+  [data-results] .hit__go {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  [data-results] .hit__go:hover {
+    text-decoration: underline;
+  }
+
+  [data-results] mark {
+    background: color-mix(in srgb, var(--t-warm) 35%, transparent);
+    color: inherit;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 640px) {
+    [data-results] .hit {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    [data-results] .hit__go {
+      grid-column: auto;
+      grid-row: auto;
+    }
+  }
+</style>
+
+<script>
+  import type { SearchItem } from '../lib/search';
+
+  const items: SearchItem[] = JSON.parse(document.getElementById('search-index')!.textContent!);
+
+  // Кириллица, похожая на латиницу, — в каталоге встречается «SNK-Т» с русской Т
+  const LOOKALIKE: Record<string, string> = { а: 'a', в: 'b', е: 'e', к: 'k', м: 'm', н: 'h', о: 'o', р: 'p', с: 'c', т: 't', х: 'x', у: 'y' };
+  // Набор в неправильной раскладке: «ыта» → «sna»
+  const RU = 'йцукенгшщзхъфывапролджэячсмитьбю';
+  const EN = 'qwertyuiop[]asdfghjkl;\'zxcvbnm,.';
+
+  const norm = (s: string) => s.toLowerCase().replace(/ё/g, 'е');
+  const fold = (s: string) => s.replace(/[а-я]/g, (c) => LOOKALIKE[c] ?? c);
+  const compact = (s: string) => fold(s).replace(/[^a-z0-9а-я]/g, '');
+  // Простейший стемминг: «кондиционеры» → «кондиционер», «уличный» → «уличн»
+  const stem = (t: string) => (t.length >= 6 ? t.replace(/(ами|ями|ого|его|ому|ему|ов|ев|ей|ой|ый|ий|ая|яя|ое|ее|ые|ие|ам|ям|ах|ях|ы|и|а|я|у|ю|е|о)$/, '') : t);
+  const swapLayout = (s: string) => [...s].map((c) => (RU.includes(c) ? EN[RU.indexOf(c)] : c)).join('');
+
+  const indexed = items.map((it) => {
+    const words = norm([it.code, it.title, it.label, it.text, it.specs.join(' '), it.keywords, it.models.join(' ')].join(' '));
+    return { it, words, folded: fold(words), packed: compact(words), models: it.models.map((m) => ({ m, packed: compact(norm(m)) })) };
+  });
+
+  function search(raw: string) {
+    const tokens = norm(raw).split(/[\s,;]+/).filter(Boolean);
+    if (!tokens.length) return [];
+    const results: { it: SearchItem; score: number; hitModels: Set<string> }[] = [];
+
+    for (const row of indexed) {
+      let score = 0;
+      const hitModels = new Set<string>();
+      let all = true;
+      for (const tok of tokens) {
+        const t = stem(tok);
+        const tf = fold(t);
+        const tp = compact(t);
+        let s = 0;
+        if (row.it.code && compact(norm(row.it.code)) === tp) s += 50;
+        const models = tp.length >= 3 ? row.models.filter((x) => x.packed.startsWith(tp) || (tp.length >= 5 && x.packed.includes(tp))) : [];
+        if (models.length) {
+          models.forEach((x) => hitModels.add(x.m));
+          s += models.length === 1 ? 40 : 20;
+        }
+        if (norm(row.it.title).includes(t)) s += 15;
+        if (row.folded.includes(tf)) s += 5;
+        else if (tp && row.packed.includes(tp)) s += 3;
+        if (!s) {
+          all = false;
+          break;
+        }
+        score += s;
+      }
+      if (all) results.push({ it: row.it, score: score + (row.it.kind === 'series' ? 1 : 0), hitModels });
+    }
+    return results.sort((a, b) => b.score - a.score);
+  }
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&${{ '&': 'amp', '<': 'lt', '>': 'gt', '"': 'quot' }[c]};`);
+
+  function highlight(text: string, tokens: string[]) {
+    let html = esc(text);
+    for (const t of tokens.map(stem).filter((t) => t.length >= 2)) {
+      const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'giu');
+      html = html.replace(re, '<mark>$1</mark>');
+    }
+    return html;
+  }
+
+  function render({ it, hitModels }: { it: SearchItem; hitModels: Set<string> }, tokens: string[]) {
+    const ext = it.href.includes('.pdf') ? ' target="_blank" rel="noopener"' : '';
+    const models = hitModels.size
+      ? [...hitModels].slice(0, 12)
+      : it.models.slice(0, 6);
+    const more = it.models.length - models.length;
+    return `<li class="hit hit--${esc(it.tone)}">
+      <span class="hit__label">${esc(it.label)}${it.code ? ` · серия ${esc(it.code)}` : ''}</span>
+      <span class="hit__title"><a href="${esc(it.href)}"${ext}>${highlight(it.title, tokens)}</a></span>
+      ${it.text ? `<p class="hit__text">${highlight(it.text, tokens)}</p>` : ''}
+      ${it.specs.length ? `<ul class="hit__specs">${it.specs.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+      ${models.length ? `<ul class="hit__models" aria-label="Модели">${models.map((m) => `<li class="${hitModels.has(m) ? 'is-match' : ''}">${esc(m)}</li>`).join('')}${more > 0 ? `<li>ещё ${more}</li>` : ''}</ul>` : ''}
+      <a class="hit__go" href="${esc(it.href)}"${ext}>${esc(it.linkText)} →</a>
+    </li>`;
+  }
+
+  const form = document.querySelector<HTMLFormElement>('[data-search-form]')!;
+  const input = form.querySelector<HTMLInputElement>('input[name="q"]')!;
+  const status = document.querySelector<HTMLElement>('[data-status]')!;
+  const list = document.querySelector<HTMLElement>('[data-results]')!;
+  const browse = document.querySelector<HTMLElement>('[data-browse]')!;
+
+  const plural = (n: number, one: string, few: string, many: string) => {
+    const m10 = n % 10;
+    const m100 = n % 100;
+    return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+  };
+
+  function run() {
+    const q = input.value.trim();
+    const params = new URLSearchParams(location.search);
+    if (q) params.set('q', q);
+    else params.delete('q');
+    history.replaceState(null, '', `${location.pathname}${params.size ? `?${params}` : ''}`);
+
+    if (!q) {
+      status.textContent = '';
+      list.innerHTML = '';
+      browse.hidden = false;
+      return;
+    }
+
+    let found = search(q);
+    let used = q;
+    if (!found.length && /[а-яё]/i.test(q)) {
+      // Возможно, артикул набран в русской раскладке
+      const swapped = swapLayout(norm(q));
+      const alt = search(swapped);
+      if (alt.length) {
+        found = alt;
+        used = swapped;
+      }
+    }
+
+    const tokens = norm(used).split(/[\s,;]+/).filter(Boolean);
+    browse.hidden = found.length > 0;
+    if (!found.length) {
+      status.textContent = `По запросу «${q}» ничего не нашлось. Попробуйте серию (OTS, SNV, TBS) или задачу (обогрев, вентиляция) — или посмотрите весь ассортимент ниже.`;
+      list.innerHTML = '';
+      return;
+    }
+    status.textContent =
+      `${used !== q ? `Показаны результаты для «${used}». ` : ''}` +
+      `Найдено ${found.length} ${plural(found.length, 'результат', 'результата', 'результатов')}`;
+    list.innerHTML = found.map((r) => render(r, tokens)).join('');
+  }
+
+  let timer = 0;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(run, 120);
+  });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    run();
+  });
+  for (const chip of document.querySelectorAll<HTMLButtonElement>('[data-q]')) {
+    chip.addEventListener('click', () => {
+      input.value = chip.dataset.q!;
+      run();
+      input.focus();
+    });
+  }
+
+  input.value = new URLSearchParams(location.search).get('q') ?? '';
+  run();
+</script>

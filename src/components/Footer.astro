@@ -3,6 +3,8 @@ import Logo from './Logo.astro';
 import { catalog, categoryUrl } from '../data/catalog';
 import { support, company } from '../data/site';
 import { contacts } from '../data/company';
+import { catalogPdf } from '../data/products';
+import { url } from '../lib/url';
 
 const year = new Date().getFullYear();
 ---
@@ -23,6 +25,8 @@ const year = new Date().getFullYear();
         <h3>Продукция</h3>
         <ul>
           {catalog.map((c) => <li><a href={categoryUrl(c)}>{c.title}</a></li>)}
+          <li><a href={url('/search/')}>Поиск по каталогу</a></li>
+          <li><a href={catalogPdf.href} download={catalogPdf.file}>Скачать каталог (PDF)</a></li>
         </ul>
       </nav>
 

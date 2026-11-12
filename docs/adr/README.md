@@ -25,3 +25,4 @@
 | 0005 | [Хостинг — Render Static Site](0005-hosting-render.md) | Заменено 0006 | 2026-11-07 |
 | 0006 | [Хостинг — GitHub Pages](0006-hosting-github-pages.md) | Принято    | 2026-11-07 |
 | 0007 | [Docker-образ сайта (nginx + статика)](0007-docker-image.md) | Предложено | 2026-11-12 |
+| 0008 | [PDF-каталог в репозитории, поиск и подбор на стороне браузера](0008-catalog-pdf-search-selector.md) | Предложено | 2026-11-12 |

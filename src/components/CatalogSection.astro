@@ -1,5 +1,6 @@
 ---
 import { catalog, categoryUrl, groupUrl } from '../data/catalog';
+import CatalogDownload from './CatalogDownload.astro';
 ---
 
 <section id="catalog" class="block">
@@ -31,6 +32,8 @@ import { catalog, categoryUrl, groupUrl } from '../data/catalog';
         </article>
       ))}
     </div>
+
+    <CatalogDownload />
   </div>
 </section>
 
