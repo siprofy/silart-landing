@@ -1,0 +1,162 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ContactSection from '../../components/ContactSection.astro';
+import { history, mission, values } from '../../data/company';
+import { url } from '../../lib/url';
+---
+
+<BaseLayout
+  title="История компании Silart — российский производитель климатического оборудования"
+  description="Silart — российский разработчик и производитель оборудования технологического климата для шкафов автоматики и телеком-стоек. На рынке с 2009 года, собственное производство в Москве."
+>
+  <PageHeader
+    title="История компании"
+    lead="Silart — российский разработчик и производитель оборудования технологического климата для корпусов, шкафов управления и автоматики, телекоммуникационного и производственного оборудования. Ведём полный инженерный цикл: от проектирования и испытаний до серийного выпуска и технической поддержки."
+    crumbs={[{ title: 'Компания', href: url('/#company') }]}
+  />
+
+  <section class="block block--first">
+    <div class="container">
+      <h2>Путь компании</h2>
+      <ol class="timeline">
+        {history.map((m) => (
+          <li>
+            <span class="timeline__year">{m.year}</span>
+            <div>
+              <h3>{m.title}</h3>
+              <p>{m.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container mission">
+      <div>
+        <h2>Миссия</h2>
+        <p class="block__lead">Слоган компании — «Сила российских технологий».</p>
+      </div>
+      <ol class="mission__list">
+        {mission.map((item) => <li>{item}</li>)}
+      </ol>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container">
+      <h2>Наши принципы</h2>
+      <p class="block__lead">
+        Собственные разработки, локальное производство и решения, которые работают в российских
+        условиях эксплуатации.
+      </p>
+      <ul class="cards block__body values">
+        {values.map((v) => (
+          <li class="card">
+            <h3>{v.title}</h3>
+            <p>{v.text}</p>
+          </li>
+        ))}
+      </ul>
+      <p class="more">
+        <a class="link-arrow" href={url('/company/production/')}>Как устроено наше производство</a>
+      </p>
+    </div>
+  </section>
+
+  <ContactSection />
+</BaseLayout>
+
+<style>
+  .timeline {
+    margin: clamp(32px, 4vw, 48px) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .timeline li {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 24px;
+    padding-block: 28px;
+    border-top: 1px solid var(--line);
+  }
+
+  .timeline__year {
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  .timeline h3 {
+    margin-bottom: 8px;
+  }
+
+  .timeline p {
+    max-width: 60ch;
+    color: var(--ink-muted);
+  }
+
+  .mission {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+
+  .mission__list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: m;
+  }
+
+  .mission__list li {
+    counter-increment: m;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    padding-block: 20px;
+    border-bottom: 1px solid var(--line);
+    font-size: 20px;
+  }
+
+  .mission__list li:first-child {
+    border-top: 1px solid var(--line);
+  }
+
+  .mission__list li::before {
+    content: '0' counter(m);
+    color: var(--ink-muted);
+    font-size: 15px;
+    padding-top: 4px;
+  }
+
+  .values {
+    margin-bottom: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .more {
+    margin-top: 32px;
+  }
+
+  @media (max-width: 860px) {
+    .mission {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .timeline li {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+</style>

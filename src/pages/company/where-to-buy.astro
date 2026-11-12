@@ -1,0 +1,191 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ContactSection from '../../components/ContactSection.astro';
+import { partners, telHref, siteLabel } from '../../data/partners';
+import { contacts } from '../../data/company';
+import { url } from '../../lib/url';
+
+const cities = partners.flatMap((country) => country.cities);
+const total = cities.reduce((sum, city) => sum + city.partners.length, 0);
+---
+
+<BaseLayout
+  title="Где купить оборудование Silart — дистрибьюторы в России, Казахстане и Беларуси"
+  description={`Официальные дистрибьюторы Silart: ${total} компаний в ${cities.length} городах. Адреса, телефоны и сайты партнёров.`}
+>
+  <PageHeader
+    title="Где купить"
+    lead={`Оборудование Silart продают ${total} официальных дистрибьюторов в ${cities.length} городах России, Казахстана и Беларуси. Не нашли свой город — звоните, подберём оборудование и подскажем ближайшего партнёра.`}
+    crumbs={[{ title: 'Компания', href: url('/#company') }]}
+  >
+    <div class="sales">
+      <a class="btn btn--primary" href={contacts.phoneHref}>{contacts.phone}</a>
+      <a class="btn btn--secondary" href={`mailto:${contacts.email}`}>{contacts.email}</a>
+    </div>
+  </PageHeader>
+
+  <section class="block block--first">
+    <div class="container">
+      <nav aria-label="Города" class="cities">
+        {cities.map((city) => (
+          <a href={`#${city.slug}`}>
+            {city.name}
+            <span>{city.partners.length}</span>
+          </a>
+        ))}
+      </nav>
+
+      {partners.map((country) => (
+        <div class="country">
+          <h2>{country.name}</h2>
+
+          {country.cities.map((city) => (
+            <section class="city" id={city.slug} aria-labelledby={`${city.slug}-title`}>
+              <h3 id={`${city.slug}-title`} class="city__name">{city.name}</h3>
+              <ul class="cards city__list">
+                {city.partners.map((p) => (
+                  <li class="card partner">
+                    <h4>{p.name}</h4>
+                    {p.address && <p class="partner__address">{p.address}</p>}
+                    <ul class="partner__contacts">
+                      {p.phones?.map((phone) => (
+                        <li><a href={telHref(phone)}>{phone}</a></li>
+                      ))}
+                      {p.email && <li><a href={`mailto:${p.email}`}>{p.email}</a></li>}
+                      {p.site && (
+                        <li>
+                          <a href={p.site} target="_blank" rel="noopener">{siteLabel(p.site)}</a>
+                        </li>
+                      )}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ))}
+
+      <div class="card become">
+        <div>
+          <h2>Стать партнёром</h2>
+          <p>
+            Продаёте электротехнику или собираете шкафы автоматики? Свяжитесь с отделом продаж —
+            расскажем об условиях сотрудничества.
+          </p>
+        </div>
+        <a class="btn btn--primary" href={`mailto:${contacts.email}?subject=${encodeURIComponent('Партнёрство')}`}>
+          Написать в отдел продаж
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <ContactSection />
+</BaseLayout>
+
+<style>
+  .sales {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cities a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 15px;
+    text-decoration: none;
+  }
+
+  .cities a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .cities span {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .country {
+    margin-top: clamp(48px, 6vw, 80px);
+  }
+
+  .city {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+
+  .city__name {
+    margin-bottom: 16px;
+    font-size: 22px;
+  }
+
+  .city__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .partner h4 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .partner__address {
+    font-size: 15px;
+  }
+
+  .partner__contacts {
+    display: grid;
+    gap: 4px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 15px;
+  }
+
+  .partner__contacts a {
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .partner__contacts a:hover {
+    color: var(--accent);
+  }
+
+  .become {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: clamp(48px, 6vw, 80px);
+    padding: clamp(24px, 4vw, 40px);
+  }
+
+  .become h2 {
+    font-size: clamp(26px, 3vw, 34px);
+  }
+
+  .become p {
+    max-width: 56ch;
+    margin-top: 12px;
+  }
+</style>

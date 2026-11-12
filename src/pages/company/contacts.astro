@@ -1,0 +1,180 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ContactSection from '../../components/ContactSection.astro';
+import { contacts, requisites, mapUrl } from '../../data/company';
+import { url } from '../../lib/url';
+
+const channels = [
+  { label: 'Телефон', value: contacts.phone, href: contacts.phoneHref, note: 'Отдел продаж и общие вопросы' },
+  { label: 'E-mail', value: contacts.email, href: `mailto:${contacts.email}`, note: 'Запросы, подбор, коммерческие предложения' },
+  {
+    label: 'Техническая поддержка',
+    value: contacts.supportEmail,
+    href: `mailto:${contacts.supportEmail}`,
+    note: 'Монтаж, настройка и эксплуатация оборудования',
+  },
+  { label: 'График работы', value: contacts.schedule, note: 'Суббота и воскресенье — выходные' },
+];
+---
+
+<BaseLayout
+  title="Контакты Silart — телефон, адрес и реквизиты"
+  description={`Silart: ${contacts.phone}, ${contacts.email}. Офис и производство в Москве: ${contacts.office.address}. Реквизиты ООО «СИЛАРТ».`}
+>
+  <PageHeader
+    title="Наши контакты"
+    lead="Офис и производство Silart находятся в Москве. Позвоните или напишите — поможем подобрать оборудование и ответим на технические вопросы."
+    crumbs={[{ title: 'Компания', href: url('/#company') }]}
+  />
+
+  <section class="block block--first">
+    <div class="container">
+      <dl class="cards channels">
+        {channels.map((c) => (
+          <div class="card">
+            <dt>{c.label}</dt>
+            <dd class="channels__value">{c.href ? <a href={c.href}>{c.value}</a> : c.value}</dd>
+            <dd class="channels__note">{c.note}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container addresses">
+      <div>
+        <h2>Адреса</h2>
+        <p class="block__lead">
+          Купить оборудование в своём городе можно у дистрибьюторов —
+          <a href={url('/company/where-to-buy/')}>смотрите список партнёров</a>.
+        </p>
+      </div>
+
+      <div class="addresses__list">
+        {[contacts.office, contacts.postal].map((a) => (
+          <div class="card">
+            <h3>{a.title}</h3>
+            <p class="addresses__text">{a.address}</p>
+            {a === contacts.office && (
+              <a class="link-arrow" href={mapUrl(a.address)} target="_blank" rel="noopener">
+                Открыть на Яндекс Картах
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container">
+      <h2>Реквизиты</h2>
+      <dl class="requisites">
+        {requisites.map((r) => (
+          <div>
+            <dt>{r.label}</dt>
+            <dd>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <ContactSection />
+</BaseLayout>
+
+<style>
+  .channels {
+    margin: 0;
+  }
+
+  .channels dt {
+    font-size: 15px;
+    color: var(--ink-muted);
+  }
+
+  .channels dd {
+    margin: 0;
+  }
+
+  .channels__value {
+    margin-top: 8px !important;
+    font-size: 20px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .channels__value a {
+    text-decoration: none;
+  }
+
+  .channels__value a:hover {
+    color: var(--accent);
+  }
+
+  .channels__note {
+    margin-top: 6px !important;
+    font-size: 15px;
+    color: var(--ink-muted);
+  }
+
+  .addresses {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+
+  .addresses .block__lead a {
+    color: var(--accent);
+  }
+
+  .addresses__list {
+    display: grid;
+    gap: 20px;
+  }
+
+  .addresses__text {
+    margin-bottom: 14px;
+    font-size: 18px;
+    color: var(--ink) !important;
+  }
+
+  .requisites {
+    display: grid;
+    margin: clamp(32px, 4vw, 48px) 0 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .requisites div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 16px;
+    padding-block: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .requisites dt {
+    color: var(--ink-muted);
+  }
+
+  .requisites dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 860px) {
+    .addresses {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .requisites div {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+  }
+</style>

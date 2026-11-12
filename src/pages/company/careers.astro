@@ -1,0 +1,117 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { careers, contacts } from '../../data/company';
+import { url } from '../../lib/url';
+---
+
+<BaseLayout
+  title="Карьера в Silart — вакансии на производстве и в конструкторском бюро"
+  description="Работа в Silart: собственное производство и конструкторское бюро в Москве. Открытые вакансии на hh.ru и анкета для кандидатов."
+>
+  <PageHeader
+    title="Карьера у нас"
+    lead="Профессионализм, честность, созидание. В Silart инженерные идеи становятся серийными изделиями, а каждый сотрудник видит результат своей работы."
+    crumbs={[{ title: 'Компания', href: url('/#company') }]}
+  >
+    <div class="actions">
+      <a class="btn btn--primary" href={careers.links[0].href} target="_blank" rel="noopener">
+        Открытые вакансии
+      </a>
+      <a class="btn btn--secondary" href={careers.links[1].href} target="_blank" rel="noopener">
+        Оставить анкету
+      </a>
+    </div>
+  </PageHeader>
+
+  <section class="block block--first">
+    <div class="container">
+      <h2>Как мы работаем</h2>
+      <ul class="cards block__body plain">
+        {careers.principles.map((p) => (
+          <li class="card">
+            <h3>{p.title}</h3>
+            <p>{p.text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container split">
+      <div>
+        <h2>Кого мы ждём</h2>
+        <ul class="checklist block__body expect">
+          {careers.expectations.map((e) => <li>{e}</li>)}
+        </ul>
+      </div>
+
+      <ul class="links plain">
+        {careers.links.map((l) => (
+          <li class="card">
+            <h3>{l.title}</h3>
+            <p>{l.text}</p>
+            <a class="link-arrow" href={l.href} target="_blank" rel="noopener">{l.cta}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container">
+      <h2>Остались вопросы?</h2>
+      <p class="block__lead">
+        Звоните <a href={contacts.phoneHref}>{contacts.phone}</a> или пишите на
+        <a href={`mailto:${contacts.email}`}>{contacts.email}</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .plain {
+    margin-bottom: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+
+  .expect {
+    font-size: 19px;
+  }
+
+  .links {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+  }
+
+  .links p {
+    margin-bottom: 14px;
+  }
+
+  .block__lead a {
+    color: var(--accent);
+  }
+
+  @media (max-width: 860px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

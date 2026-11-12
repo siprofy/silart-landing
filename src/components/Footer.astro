@@ -2,6 +2,7 @@
 import Logo from './Logo.astro';
 import { catalog, categoryUrl } from '../data/catalog';
 import { support, company } from '../data/site';
+import { contacts } from '../data/company';
 
 const year = new Date().getFullYear();
 ---
@@ -12,6 +13,10 @@ const year = new Date().getFullYear();
       <div class="footer__brand">
         <Logo />
         <p>Климат-контроль для электротехнических шкафов и стоек.</p>
+        <p class="footer__contacts">
+          <a href={contacts.phoneHref}>{contacts.phone}</a>
+          <a href={`mailto:${contacts.email}`}>{contacts.email}</a>
+        </p>
       </div>
 
       <nav aria-label="Продукция">
@@ -58,6 +63,12 @@ const year = new Date().getFullYear();
   .footer__brand p {
     max-width: 28ch;
     margin-top: 14px;
+  }
+
+  .footer__contacts {
+    display: grid;
+    gap: 4px;
+    color: var(--ink);
   }
 
   .footer h3 {

@@ -1,0 +1,224 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ContactSection from '../../components/ContactSection.astro';
+import { production } from '../../data/company';
+import { url } from '../../lib/url';
+---
+
+<BaseLayout
+  title="Производство Silart в Москве — металлообработка, литьё, испытания"
+  description="Собственное производство Silart в Москве: лазерная резка, литьё пластика, лазерная сварка, сборка. Конструкторское бюро и климатическая камера для испытаний от −70 до +170 °C."
+>
+  <PageHeader
+    title="Наше производство"
+    lead="Производственная площадка Silart полностью находится в Москве. Мы расширяем список операций, которые выполняем сами, — так контролируем качество, сокращаем сроки и не зависим от поставщиков. Выпускаем серийно и под задачи заказчика, ключевые позиции держим на складе."
+    crumbs={[{ title: 'Компания', href: url('/#company') }]}
+  />
+
+  <section class="block block--first">
+    <div class="container">
+      <dl class="facts">
+        {production.facts.map((f) => (
+          <div>
+            <dt>{f.label}</dt>
+            <dd>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container">
+      <h2>Производственные участки</h2>
+      <p class="block__lead">
+        Автоматизированное оборудование для работы с металлом и пластиком позволяет выпускать
+        корпуса и детали сложной конструкции у себя.
+      </p>
+      <ul class="cards block__body plain">
+        {production.areas.map((a) => (
+          <li class="card">
+            <h3>{a.title}</h3>
+            <p>{a.text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container">
+      <h2>От идеи до серии</h2>
+      <p class="block__lead">
+        Собственное конструкторское бюро ведёт изделие от анализа задачи до запуска в производство.
+      </p>
+      <ol class="stages block__body">
+        {production.stages.map((s) => (
+          <li>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container split">
+      <div>
+        <h2>Испытания и качество</h2>
+        <p class="block__lead">
+          Собственная климатическая камера проверяет оборудование в диапазоне от −70 до +170 °C.
+        </p>
+        <ul class="checklist block__body">
+          {production.quality.map((q) => <li>{q}</li>)}
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Что выпускаем</h3>
+        <ul class="checklist products">
+          {production.products.map((p) => <li>{p}</li>)}
+        </ul>
+        <p class="products__more">
+          <a class="link-arrow" href={url('/#catalog')}>Весь каталог</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <ContactSection />
+</BaseLayout>
+
+<style>
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin: 0;
+  }
+
+  .facts div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .facts dd {
+    margin: 0;
+    font-size: clamp(30px, 3.4vw, 44px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    /* Тепловая шкала: от холода к жару — как диапазон испытаний */
+    background: linear-gradient(90deg, var(--t-cold), var(--t-mild) 50%, var(--t-hot));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .facts dt {
+    color: var(--ink-muted);
+  }
+
+  .plain {
+    margin-bottom: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .stages {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: s;
+  }
+
+  .stages li {
+    counter-increment: s;
+    padding: 20px 20px 0 0;
+    border-top: 2px solid var(--line);
+  }
+
+  .stages li::before {
+    content: counter(s);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: -37px 0 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .stages h3 {
+    margin-bottom: 6px;
+  }
+
+  .stages p {
+    color: var(--ink-muted);
+    font-size: 16px;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+
+  .products {
+    margin-top: 16px;
+  }
+
+  .products li {
+    color: var(--ink);
+  }
+
+  .products__more {
+    margin-top: 24px;
+  }
+
+  @media (max-width: 960px) {
+    .stages {
+      grid-template-columns: 1fr;
+      gap: 0;
+      border-left: 2px solid var(--line);
+      margin-left: 15px;
+    }
+
+    .stages li {
+      position: relative;
+      padding: 4px 0 24px 32px;
+      border-top: 0;
+    }
+
+    .stages li::before {
+      position: absolute;
+      top: 0;
+      left: -17px;
+      margin: 0;
+    }
+
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .facts {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
