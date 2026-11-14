@@ -22,8 +22,14 @@ COPY . .
 # По умолчанию — корень домена https://silart.com.
 ARG SITE_URL=https://silart.com
 ARG BASE_PATH=/
+# Коммит и дата для подвала сайта (src/lib/build.ts); .git в образ не копируется,
+# поэтому CI передаёт их явно. Без них в подвале будет «dev» и время сборки.
+ARG BUILD_COMMIT=
+ARG BUILD_DATE=
 ENV SITE_URL=${SITE_URL} \
     BASE_PATH=${BASE_PATH} \
+    BUILD_COMMIT=${BUILD_COMMIT} \
+    BUILD_DATE=${BUILD_DATE} \
     ASTRO_TELEMETRY_DISABLED=1
 RUN npm run build
 
@@ -32,7 +38,9 @@ RUN npm run build
 FROM ${NGINX_IMAGE} AS runtime
 
 ARG BASE_PATH=/
-LABEL org.opencontainers.image.title="silart-landing" \
+ARG BUILD_COMMIT=
+LABEL org.opencontainers.image.revision="${BUILD_COMMIT}" \
+      org.opencontainers.image.title="silart-landing" \
       org.opencontainers.image.description="Сайт silart.com (Astro, статика на nginx)" \
       org.opencontainers.image.source="https://github.com/siprofy/silart-landing"
 

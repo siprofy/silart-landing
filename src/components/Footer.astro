@@ -5,6 +5,7 @@ import { support, company } from '../data/site';
 import { contacts } from '../data/company';
 import { catalogPdf } from '../data/products';
 import { url } from '../lib/url';
+import { build } from '../lib/build';
 
 const year = new Date().getFullYear();
 ---
@@ -45,7 +46,16 @@ const year = new Date().getFullYear();
       </nav>
     </div>
 
-    <p class="footer__bottom">© {year} Silart</p>
+    <div class="footer__bottom">
+      <p>© {year} Silart</p>
+      <p class="footer__build">
+        Обновлено <time datetime={build.dateIso} title={`${build.dateTimeText} (МСК)`}>{build.dateText}</time>{' · '}
+        версия {build.version}{' '}
+        {build.commitUrl
+          ? <a href={build.commitUrl} rel="noopener" title="Изменение в репозитории">({build.shortCommit})</a>
+          : <span>({build.shortCommit})</span>}
+      </p>
+    </div>
   </div>
 </footer>
 
@@ -53,7 +63,7 @@ const year = new Date().getFullYear();
   .footer {
     padding-block: 56px 32px;
     border-top: 1px solid var(--line);
-    background: var(--surface);
+    background: var(--chrome);
     font-size: 15px;
     color: var(--ink-muted);
   }
@@ -99,10 +109,27 @@ const year = new Date().getFullYear();
   }
 
   .footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
     margin-top: 48px;
     padding-top: 24px;
     border-top: 1px solid var(--line);
     font-size: 14px;
+  }
+
+  .footer__bottom p {
+    margin: 0;
+  }
+
+  .footer__build {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer__build a {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
   }
 
   @media (max-width: 900px) {
