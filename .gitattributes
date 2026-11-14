@@ -1,0 +1,5 @@
+# Скрипты и конфиги для Linux-сервера и CI — всегда с LF, иначе bash и cloud-init ломаются на CRLF
+*.sh       text eol=lf
+deploy/**  text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf

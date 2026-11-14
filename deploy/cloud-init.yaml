@@ -1,0 +1,26 @@
+#cloud-config
+# Первичная настройка сервера Timeweb Cloud (twc server create --user-data deploy/cloud-init.yaml).
+# Ставит Docker, создаёт пользователя deploy с ключом GitHub Actions. Это базовая часть:
+# deploy/render-cloud-init.ps1 добавляет к ней файлы сайта и ключ хоста — см. docs/deploy.md.
+package_update: true
+package_upgrade: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - curl
+  - unattended-upgrades
+
+users:
+  - default
+  - name: deploy
+    shell: /bin/bash
+    lock_passwd: true
+    # Ключ CI может только запустить деплой: без shell, pty и проброса портов
+    ssh_authorized_keys:
+      - restrict,command="/usr/local/bin/silart-deploy" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB+QhuVczsdTXUS8Wy2cGzN7r9yQEeHyLLyKCsUpaz/r silart_deploy
+
+runcmd:
+  - systemctl enable --now docker
+  - usermod -aG docker deploy
+  - install -d -o deploy -g deploy -m 0750 /opt/silart
+  - chown -R deploy:deploy /opt/silart

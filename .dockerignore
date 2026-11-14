@@ -15,5 +15,6 @@ docs
 Dockerfile*
 compose*.yaml
 docker-compose*.yml
+deploy
 .DS_Store
 Thumbs.db

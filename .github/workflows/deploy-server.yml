@@ -1,0 +1,130 @@
+name: Deploy to server
+
+# Сборка Docker-образа, публикация в ghcr.io и деплой на сервер Timeweb Cloud.
+# Устройство и ручные операции — docs/deploy.md, решение — docs/adr/0009-deploy-timeweb-cloud.md.
+#
+# Нужно в настройках репозитория (Settings → Secrets and variables → Actions):
+#   vars.SITE_URL              адрес сайта для сборки, сейчас http://<IP сервера>
+#   vars.DEPLOY_HOST           IP сервера
+#   secrets.DEPLOY_SSH_KEY     приватный ключ silart_deploy (на сервере ограничен forced command)
+#   secrets.DEPLOY_KNOWN_HOSTS "silart-web ssh-ed25519 ..." — ключ хоста (HostKeyAlias), защита от подмены сервера
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# По умолчанию у задач нет прав; каждая получает только нужные
+permissions: {}
+
+# Деплои идут строго по очереди; новый push не прерывает идущий деплой
+concurrency:
+  group: server-deploy
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/siprofy/silart-landing
+
+jobs:
+  image:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check repository variables
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$DEPLOY_HOST" ]; then
+            echo "::error::Не заданы переменные SITE_URL и/или DEPLOY_HOST (Settings → Secrets and variables → Actions → Variables)"
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Внутри Dockerfile выполняются npm ci и astro build — это и есть проверка сборки
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          build-args: |
+            SITE_URL=${{ vars.SITE_URL }}
+            BASE_PATH=/
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Timeweb Cloud
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      packages: read
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - name: Prepare SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # На сервере ключ привязан к /usr/local/bin/silart-deploy: аргумент — тег образа,
+      # stdin — временный токен для скачивания образа из ghcr.io
+      - name: Deploy ${{ github.sha }}
+        env:
+          HOST: ${{ vars.DEPLOY_HOST }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$TOKEN" | ssh -i ~/.ssh/deploy_key \
+            -o HostKeyAlias=silart-web -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes -o ConnectTimeout=15 \
+            "deploy@${HOST}" "${GITHUB_SHA}"
+
+      - name: Check site from outside
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 10 --retry 3 --retry-delay 3 "${SITE_URL%/}/healthz"
+          curl -fsS --max-time 10 -o /dev/null "${SITE_URL%/}/"
+
+      - name: Summary
+        if: always()
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "## Деплой на сервер: ${STATUS}"
+            echo ""
+            echo "- Версия: \`${GITHUB_SHA}\`"
+            echo "- Образ: \`${IMAGE}:${GITHUB_SHA}\`"
+            echo "- Сайт: ${SITE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
