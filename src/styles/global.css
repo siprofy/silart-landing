@@ -1,17 +1,21 @@
-/* Дизайн-токены. Тёмная тема: по системной настройке или явно через [data-theme]. */
+/* Дизайн-токены. Тёмная тема: по системной настройке или явно через [data-theme].
+   Палитра совпадает с основным сайтом silart.com: тёплый светлый и тёмно-синий тёмный фон,
+   бирюзовый фирменный цвет логотипа. */
 :root {
   color-scheme: light;
 
-  --bg: #f2f4f6;
-  --surface: #ffffff;
-  --surface-2: #e8ecf0;
-  --ink: #14202b;
-  --ink-muted: #56636f;
-  --line: #cfd6dd;
-  --grid-line: rgb(20 32 43 / 0.06);
-  --accent: #0b6fa4;
+  --bg: #fbf9f5;
+  --surface: #f4f1eb;
+  --surface-2: #ece8e3;
+  --chrome: #ece8e3; /* фон шапки и подвала */
+  --ink: #2b323d;
+  --ink-muted: #6e737a;
+  --line: #e0dbd3;
+  --grid-line: rgb(43 50 61 / 0.05);
+  --brand: #2c5461;
+  --accent: #2c5461;
   --accent-ink: #ffffff;
-  --header-bg: rgb(242 244 246 / 0.82);
+  --header-bg: rgb(236 232 227 / 0.9);
 
   /* Тепловая шкала: общая для тепловой карты и маркеров каталога */
   --t-frost: #3a2a8c;
@@ -37,32 +41,36 @@
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --bg: #0d1620;
-    --surface: #131f2b;
-    --surface-2: #1a2836;
-    --ink: #e4ebf1;
-    --ink-muted: #8d9cab;
-    --line: #253545;
-    --grid-line: rgb(140 180 220 / 0.07);
-    --accent: #3cc3e6;
-    --accent-ink: #06202b;
-    --header-bg: rgb(13 22 32 / 0.8);
+    --bg: #101720;
+    --surface: #16202a;
+    --surface-2: #1d2a38;
+    --chrome: #1a2c3d;
+    --ink: #dde2e6;
+    --ink-muted: #8792a0;
+    --line: #233243;
+    --grid-line: rgb(170 190 210 / 0.05);
+    --brand: #eef3f8;
+    --accent: #7fb3c2;
+    --accent-ink: #0f1720;
+    --header-bg: rgb(26 44 61 / 0.92);
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #0d1620;
-  --surface: #131f2b;
-  --surface-2: #1a2836;
-  --ink: #e4ebf1;
-  --ink-muted: #8d9cab;
-  --line: #253545;
-  --grid-line: rgb(140 180 220 / 0.07);
-  --accent: #3cc3e6;
-  --accent-ink: #06202b;
-  --header-bg: rgb(13 22 32 / 0.8);
+  --bg: #101720;
+  --surface: #16202a;
+  --surface-2: #1d2a38;
+  --chrome: #1a2c3d;
+  --ink: #dde2e6;
+  --ink-muted: #8792a0;
+  --line: #233243;
+  --grid-line: rgb(170 190 210 / 0.05);
+  --brand: #eef3f8;
+  --accent: #7fb3c2;
+  --accent-ink: #0f1720;
+  --header-bg: rgb(26 44 61 / 0.92);
 }
 
 *,
